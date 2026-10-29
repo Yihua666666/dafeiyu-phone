@@ -1,0 +1,13 @@
+# APK build output
+app/DafeiyuChat/build/
+app/DafeiyuChat/debug.keystore
+
+# Fetched illustrations (run scripts/fetch_gallery.py)
+app/DafeiyuChat/assets/*.jpg
+!app/DafeiyuChat/assets/avatar.jpg
+docs/sheets/
+
+# OS noise
+.DS_Store
+Thumbs.db
+*.log
