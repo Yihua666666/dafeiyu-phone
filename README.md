@@ -52,10 +52,7 @@
 |---|---|
 | HyperOS / MIUI（Redmi K60，Android 15） | 开发机，已验证 |
 | Android 原生 / Pixel 类 | 理论可用，开机启动器最稳 |
-| ColorOS / realme UI | 可用，需要允许自启动、后台运行 |
-| OriginOS / Funtouch | 可用，需要允许自启动、后台高耗电 |
-| EMUI / HarmonyOS（Android 底） | 可用，需要“应用启动管理”手动管理 |
-| Samsung One UI | 可用，需要把 AutoX 和启动器移出“休眠应用” |
+| ColorOS / OriginOS / EMUI / One UI | 允许自启动、后台运行；不同 ROM 名称不同 |
 
 不同 ROM 的权限名字不一样，思路都是：**允许自启动、允许后台运行、允许悬浮窗、电池不限制**。
 
@@ -129,11 +126,7 @@ dist/DafeiyuBoot-1.0.0.apk
 它做一件事：
 
 ```text
-BOOT_COMPLETED
-  → 前台服务
-  → 等系统稳定
-  → 打开 AutoX 的 ShortcutActivity
-  → 在正常 UI 上下文启动 agent.js
+BOOT_COMPLETED → 前台服务 → ShortcutActivity → agent.js
 ```
 
 安装后打开“大肥鱼启动器”：
@@ -165,21 +158,6 @@ BOOT_COMPLETED
 /boot status
 ```
 
-## 设备权限对照
-
-开机启动器装好后，按你的系统打开对应开关：
-
-| 系统 | 需要打开 |
-|---|---|
-| HyperOS / MIUI | 自启动、后台弹出界面、电池无限制、悬浮窗 |
-| ColorOS / realme UI | 自动启动、允许后台运行、悬浮窗、电池不优化 |
-| OriginOS | 自启动、后台高耗电、悬浮窗 |
-| EMUI | 应用启动管理 → 手动管理（自启动/关联启动/后台活动） |
-| One UI | 移出“休眠应用”，允许后台活动 |
-| Pixel / 原生 Android | 自启动、电池不优化即可 |
-
-不同版本名字可能略有差异，核心是：**不要让它被系统杀掉，也不要拦住它从后台打开 AutoX。**
-
 ## 远程聊天
 
 使用的是公共 ntfy 服务器：
@@ -202,7 +180,9 @@ ntfy.sh 在部分网络下不通，所以代码换成了 `ntfy.envs.net`。
 
 > 这不是 Mem0 / Letta / Zep 之类的外部记忆库，也没有额外依赖。它是项目内置的**本地文件记忆系统**，实现就在 [`autox/agent.js`](autox/agent.js)：`appendMemory`、`recallMemory`、`appendFact`、`dailyReview`。
 
-> 另一个容易混淆的点：DSH 桌面版里的 [dsh-world](https://github.com/chenkezhen480/dsh-world) 也有自己的“日记 / 我是谁 / 近期原文”记忆，运行在 PC 的 DSH profile 里；它和手机端 `/sdcard/DeepSeekGirl` **不是同一份**，目前没有自动同步。
+> [dsh-world](https://github.com/chenkezhen480/dsh-world) 是 DSH 桌面版的另一套记忆，跑在 PC 上；和手机端 `/sdcard/DeepSeekGirl` **不是同一份**，目前没有自动同步。
+
+> 想从其他记忆系统导入，见 [从其他系统移植记忆](docs/MEMORY_IMPORT.md)。
 
 全部在手机本地：
 
