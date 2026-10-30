@@ -16,7 +16,7 @@
 
 - **自己生活**：每 10–20 分钟自己想想做什么，写日记、翻笔记、看天气、刷视频、看番
 - **关屏也能醒**：到点自己点亮屏幕继续（可关闭）
-- **开机自启**：重启后自己回来
+- **开机自启**：App / 悬浮面板 / 远程一键开关，重启后自己回来
 - **长期记忆**：`facts.md`、`self.md`、每日对话、每日回顾
 - **远程聊天**：你在自己手机上通过 ntfy 找她，她在 K60 上回你
 - **主动找你**：闲着超过 90 分钟、且两小时内没找过你，会主动发一句
@@ -93,16 +93,28 @@ topic 是密码，不要发到公开地方。
 
 ### 5. 开机自启（可选）
 
-在 AutoX.js 运行一次：
+三种开法，任选其一：
+
+1. **App**：右上角 **开机** → 设置 → 打开“开机自启”
+2. **悬浮面板**：点 `开机自启：开`
+3. **AutoX.js** 运行一次：
 
 ```text
 /sdcard/PhoneAgent/setup_boot.js
 ```
 
-它会在 AutoX 的 `IntentTaskDatabase` 里注册：
+它们都会写 AutoX 的 `IntentTaskDatabase`：
 
 ```text
 BOOT_COMPLETED -> /sdcard/PhoneAgent/agent.js
+```
+
+也可以远程发：
+
+```text
+/boot on
+/boot off
+/boot status
 ```
 
 重启后 AutoX 会自己拉起她。前提是 AutoX 的自启动权限还在。
@@ -190,6 +202,8 @@ autox/
   agent.js          手机上的主 Agent（无障碍/悬浮窗/记忆/远程桥）
   chat.js           AutoX 内的本地聊天窗口（可选）
   setup_boot.js     注册开机自启
+  boot_on.js        本机打开开机自启（App 开关用）
+  boot_off.js       本机关闭开机自启
 app/DafeiyuChat/    原生 Android 聊天 App 源码
   assets/index.html 聊天界面
   assets/gallery.js 93 张立绘清单

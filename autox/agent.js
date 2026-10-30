@@ -1654,8 +1654,116 @@ function startRemoteAction(task) {
     }
 }
 
+var BOOT_ACTION = "android.intent.action.BOOT_COMPLETED";
+var BOOT_SCRIPT = "/sdcard/PhoneAgent/agent.js";
+var BOOT_LEGACY = "/sdcard/PhoneAgent/boot_start.js";
+
+function openIntentDb() {
+    var db = context.openOrCreateDatabase("IntentTaskDatabase.db", 0, null);
+    db.execSQL("CREATE TABLE IF NOT EXISTS `IntentTask`(" +
+        "`id` INTEGER PRIMARY KEY AUTOINCREMENT, " +
+        "`script_path` TEXT NOT NULL ON CONFLICT FAIL, " +
+        "`action` TEXT, " +
+        "`category` TEXT, " +
+        "`data_type` TEXT, " +
+        "`local` INT);");
+    return db;
+}
+
+function bootTaskState() {
+    var db = openIntentDb();
+    try {
+        var cursor = db.rawQuery(
+            "SELECT id FROM `IntentTask` WHERE `action`='" + BOOT_ACTION +
+            "' AND `script_path`='" + BOOT_SCRIPT + "'", null);
+        var has = cursor.moveToFirst();
+        cursor.close();
+        return has;
+    } finally {
+        db.close();
+    }
+}
+
+function setBootTask(enabled) {
+    var db = openIntentDb();
+    try {
+        db.execSQL("DELETE FROM `IntentTask` WHERE `action`='" + BOOT_ACTION +
+            "' AND (`script_path`='" + BOOT_SCRIPT + "' OR `script_path`='" + BOOT_LEGACY + "')");
+        if (enabled) {
+            var cv = new android.content.ContentValues();
+            cv.put("script_path", BOOT_SCRIPT);
+            cv.put("action", BOOT_ACTION);
+            cv.put("local", java.lang.Integer.valueOf(1));
+            var id = db.insert("IntentTask", null, cv);
+            if (id < 0) throw new Error("写入开机任务失败");
+        }
+        files.write("/sdcard/PhoneAgent/boot_setup.txt",
+            (enabled ? "on" : "off") + " " + Date.now() + "\n");
+        return !!enabled;
+    } finally {
+        db.close();
+    }
+}
+
+function bootTaskLabel() {
+    try {
+        return bootTaskState() ? "开" : "关";
+    } catch (e) {
+        return "未知";
+    }
+}
+
+function refreshBootButton() {
+    if (!win || !win.boot) return;
+    safeCall(function () {
+        win.boot.setText("开机自启：" + bootTaskLabel());
+    }, null);
+}
+
+function handleBootCommand(command) {
+    var text = String(command || "").toLowerCase();
+    try {
+        if (text.indexOf("status") !== -1 || text.indexOf("状态") !== -1 ||
+            text === "/boot" || text === "开机自启") {
+            remotePublish("开机自启：" + bootTaskLabel() + "（下次重启生效）");
+            return;
+        }
+        var enabled;
+        if (text.indexOf("off") !== -1 || text.indexOf("关") !== -1 ||
+            text.indexOf("停止") !== -1) {
+            enabled = false;
+        } else {
+            enabled = true;
+        }
+        setBootTask(enabled);
+        refreshBootButton();
+        remotePublish(enabled ?
+            "已开启开机自启。下次手机重启，本鱼会自己回来。" :
+            "已关闭开机自启。下次重启不会自动启动。");
+        addLog("开机自启: " + (enabled ? "on" : "off"));
+    } catch (e) {
+        remotePublish("开机自启设置失败：" + e);
+        addLog("开机自启设置失败: " + e);
+    }
+}
+
+function isBootCommand(command) {
+    command = String(command || "").trim();
+    return command.indexOf("/boot") === 0 ||
+        command === "开机自启" ||
+        command === "开机自启状态" ||
+        command === "开启开机自启" ||
+        command === "关闭开机自启" ||
+        command === "打开开机自启" ||
+        command === "关掉开机自启";
+}
+
 function handleRemoteText(text) {
     var command = trimText(text);
+    if (isBootCommand(command)) {
+        handleBootCommand(command);
+        return;
+    }
     var saysUserWatching = command.indexOf("我在看") !== -1 ||
         command.indexOf("主人看番") !== -1 ||
         command.indexOf("是我在看") !== -1;
@@ -1762,6 +1870,10 @@ function pollRemote() {
         appendMemory("user", text, "remote");
 
         addLog("远程消息: " + text.substring(0, 120));
+        if (isBootCommand(text)) {
+            handleBootCommand(text);
+            continue;
+        }
         if (!isAwake()) {
             remotePublish("本鱼已经睡啦（23:00–08:00），早上再回你。🐋");
             continue;
@@ -2276,6 +2388,7 @@ win = floaty.window(
             <button id="cfg" text="设置" textSize="14sp" w="0" layout_weight="1" marginLeft="6"/>
             <button id="min" text="收起" textSize="14sp" w="0" layout_weight="1" marginLeft="6"/>
         </horizontal>
+        <button id="boot" text="开机自启：查询中" textSize="13sp" h="42" marginTop="6"/>
         <text id="log" text="就绪。高风险应用/敏感词会自动拦截。"
               textColor="#B8C4D4" textSize="11sp" marginTop="8" maxLines="8"/>
     </vertical>
@@ -2307,6 +2420,21 @@ win.stop.on("click", stopTask);
 win.cfg.on("click", configure);
 win.min.on("click", collapsePanel);
 win.peek.on("click", showPresenceDialog);
+if (win.boot) {
+    safeCall(function () { win.boot.setText("开机自启：" + bootTaskLabel()); }, null);
+    win.boot.on("click", function () {
+        try {
+            var next = !bootTaskState();
+            setBootTask(next);
+            win.boot.setText("开机自启：" + (next ? "开" : "关"));
+            toast(next ? "已开启：下次重启本鱼自己回来" : "已关闭：下次重启不会自动启动");
+            addLog("开机自启: " + (next ? "on" : "off"));
+        } catch (e) {
+            toast("开机自启设置失败：" + e);
+            addLog("开机自启设置失败: " + e);
+        }
+    });
+}
 win.title.on("click", function () {
     // 点标题不是展开，而是弹出“她在不在”的状态卡
     showPresenceDialog();

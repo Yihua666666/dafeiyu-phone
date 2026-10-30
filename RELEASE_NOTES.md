@@ -13,6 +13,10 @@
   - 文件读写/追加/删除、存储统计
   - 安全边界与任务 watchdog
 - `autox/setup_boot.js`：注册 AutoX 开机任务
+- `autox/boot_on.js` / `boot_off.js`：App 的一键开机开关
+  - App 右上角 **开机** → 设置
+  - 悬浮面板 `开机自启：开/关`
+  - 远程 `/boot on`、`/boot off`、`/boot status`
 - `app/DafeiyuChat/`：原生 WebView 聊天 App 源码
 - `dist/DafeiyuChat-1.0.0.apk`：可直接安装的 APK
   - 内置 93 张立绘
@@ -36,7 +40,7 @@
 ```text
 DafeiyuChat-1.0.0.apk
 size:   27511283 bytes
-sha256: 4A910EC8009C400CD12A6F3F4147AC956A61A61E4BEC42BE233F3D2CBA6A3CB1
+sha256: dceb65a64dcb294f5cab6c8ff9f24026cb271426615ee02280b712c28109edb4
 ```
 
 ## 已知限制

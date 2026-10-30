@@ -100,13 +100,21 @@ topic 就是密码，不要公开。
 
 ## 5. 开机自启
 
-在 AutoX.js 里运行一次：
+三种开法：
+
+- App 右上角 **开机** → 设置 → 开机自启
+- 悬浮面板点 `开机自启：开`
+- AutoX.js 运行一次 `/sdcard/PhoneAgent/setup_boot.js`
+
+也可以远程：
 
 ```text
-/sdcard/PhoneAgent/setup_boot.js
+/boot on
+/boot off
+/boot status
 ```
 
-它会写入 AutoX 自己的任务库：
+它们都会写入 AutoX 自己的任务库：
 
 ```text
 /data/data/org.autojs.autoxjs.v6/databases/IntentTaskDatabase.db
@@ -119,6 +127,8 @@ BOOT_COMPLETED -> /sdcard/PhoneAgent/agent.js
 ```
 
 重启后 AutoX 的 `StaticBroadcastReceiver` 会自动拉起 Agent。
+
+> MIUI 从 BOOT_COMPLETED 拉起 AutoX 时，悬浮面板偶尔不显示；脚本其实已经在跑。打开“大肥鱼”App 或 AutoX 的“管理”就能确认/恢复面板。
 
 前提：
 

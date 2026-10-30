@@ -1,6 +1,7 @@
 package com.deepseek.dafeiyu.chat;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 
@@ -25,6 +26,22 @@ public class NtfyBridge {
     public NtfyBridge(Activity activity, WebView webView) {
         this.activity = activity;
         this.webView = webView;
+    }
+
+    /** Launch AutoX ShortcutActivity to run a small local script. */
+    @JavascriptInterface
+    public void runScript(String path) {
+        activity.runOnUiThread(() -> {
+            try {
+                Intent intent = new Intent();
+                intent.setClassName("org.autojs.autoxjs.v6",
+                        "org.autojs.autojs.external.shortcut.ShortcutActivity");
+                intent.putExtra("path", path);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                activity.startActivity(intent);
+            } catch (Exception ignored) {
+            }
+        });
     }
 
     @JavascriptInterface
