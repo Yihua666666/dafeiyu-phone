@@ -1,18 +1,35 @@
 # 看图能力
 
-大肥鱼现在可以看三种图：
+大肥鱼现在有两种“看”：
 
-- **本地图片**：相册、下载目录、她自己房间里的图
-- **网络图片**：给一个 http/https 图片地址
-- **当前屏幕**：截屏后看画面，不再只靠 OCR 文字
+| 场景 | 方式 |
+|---|---|
+| **你上传的图片** | 视觉模型，真正描述画面 |
+| 当前屏幕 | 本地 PaddleOCR，只读文字 |
+| 相册里的旧照片 | 本地 PaddleOCR，只读文字 |
+| 网络图片 | 本地 PaddleOCR，只读文字 |
 
-## 它不是“手机自己长出了眼睛”
+**视觉模型只在你上传图片时使用，其他情况一律 OCR。** 这是硬规则，不是靠提示词自觉。
 
-图片在手机本地读取、缩放、转成 base64，然后发给你配置的**视觉模型**。  
-模型返回一段文字描述，这段描述再回到 agent 的决策上下文里。
+## 你上传的图片放哪
 
 ```text
-图片 / 截图
+/sdcard/DeepSeekGirl/inbox/
+```
+
+两种上传方式：
+
+1. 在 ntfy App / 浏览器里给 topic 附一张图  
+   消息里的附件会被 agent 下载到 `inbox/`，然后自动进入看图任务。
+2. 直接把图片放进 `/sdcard/DeepSeekGirl/inbox/`  
+   然后说“看看我上传的这张图”。
+
+只有 `inbox/` 里的图片会走视觉模型。相册、屏幕、网络图都不会。
+
+## 视觉链路
+
+```text
+inbox/ 里的用户图片
   → AutoX 本地读取、缩放
   → 视觉模型（OpenAI 兼容 /chat/completions）
   → 文字描述
@@ -86,30 +103,35 @@ Vision Key:   ollama（随便填，Ollama 不校验）
 
 ## 她怎么用
 
-任务里直接说：
+上传图片后说：
 
 ```text
-看看最近这张照片里有什么
-看看当前屏幕
-看看 https://example.com/a.jpg 是什么
+看看我上传的这张图
+这张图里是什么
 ```
 
-agent 会选：
+只有这时会走视觉模型。其他情况：
+
+```text
+看看当前屏幕          → 本地 OCR
+看看最近的相册照片    → 本地 OCR
+看看这个网页图片      → 本地 OCR
+```
+
+对应动作：
 
 ```json
-{"action":"look_latest","question":"最近这张照片里有什么"}
-{"action":"look_screen","question":"屏幕上是什么"}
-{"action":"look","url":"https://example.com/a.jpg","question":"这是什么"}
-{"action":"look","path":"/sdcard/DCIM/Camera/IMG_001.jpg","question":"你看到了什么"}
+{"action":"look","path":"/sdcard/DeepSeekGirl/inbox/upload.jpg","question":"你看到了什么"}
+{"action":"look_screen","question":"屏幕上有什么字"}
+{"action":"look_latest","question":"最近照片里有什么字"}
 ```
-
-自主思考时，她也可能自己选择“看最近的照片”或“看看窗外/相册”。
 
 ## 隐私边界
 
-- 看图会把图片上传到你配置的视觉服务，不是纯本地识别。
+- 只有 `inbox/` 里你上传的图片会发给视觉服务。
+- 屏幕、相册旧照片、网络图片只在本机做 OCR，不上传原图。
 - 截屏可能包含通知、聊天、账号信息；她不应该看支付、银行、验证码、身份证和别人的隐私聊天。
-- 视觉模型返回的文字会进入模型上下文；图片本身不写进记忆目录。
+- 视觉/OCR 返回的文字会进入模型上下文；图片本身不写进记忆目录。
 - 本地图片只允许 `/sdcard/` 下，不允许 `/sdcard/Android/`。
 - 网络图片只允许 `http/https`。
 - 没有 Wi-Fi 时不会发图。

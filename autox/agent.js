@@ -38,6 +38,7 @@ var GIRL_HOME = "/sdcard/DeepSeekGirl/";
 var DIARY_DIR = GIRL_HOME + "diary/";
 var ASSET_DIR = GIRL_HOME + "assets/";
 var APP_DIR = GIRL_HOME + "apps/";
+var USER_IMAGE_DIR = GIRL_HOME + "inbox/";
 var NTFY_BASE = "https://ntfy.envs.net/";
 var REMOTE_DIR = GIRL_HOME + "remote/";
 var REMOTE_TOPIC_FILE = REMOTE_DIR + "topic.txt";
@@ -329,6 +330,22 @@ function ensureScreenCapture() {
     if (!captureReady) addLog("截图权限未授予，OCR 兜底不可用");
     else addLog("截图权限已就绪，OCR 兜底可用");
     return captureReady;
+}
+
+function ocrImageText(img) {
+    if (!img) return [];
+    if (typeof paddle === "undefined") {
+        addLog("当前 AutoX 没有 paddle OCR 模块");
+        return [];
+    }
+    var result = safeCall(function () { return paddle.ocr(img, 4, true); }, null);
+    if (!result || !result.length) return [];
+    var lines = [];
+    for (var i = 0; i < result.length; i++) {
+        var t = trimText(result[i] && result[i].text);
+        if (t) lines.push(t);
+    }
+    return lines;
 }
 
 function ocrNodes() {
@@ -831,10 +848,11 @@ var SYSTEM_PROMPT = [
     '12. {"action":"list_dir","path":"/sdcard/DeepSeekGirl"}  列目录',
     '13. {"action":"storage_info"}  查存储总量/剩余空间/DeepSeekGirl 占用（不打开安全中心）',
     '14. {"action":"delete_file","path":"/sdcard/Download/old.apk","recursive":false}  删除文件；删目录必须 recursive:true',
-    '15. {"action":"look","path":"/sdcard/DCIM/Camera/1.jpg","question":"你看到了什么"}  看本地图片',
-    '15b. {"action":"look","url":"https://example.com/a.jpg","question":"这是什么"}  看网络图片',
-    '16. {"action":"look_screen","question":"屏幕上是什么"}  截屏后用视觉模型看当前画面',
-    '17. {"action":"look_latest","question":"最近这张照片里有什么"}  看最近保存的照片',
+    '15. {"action":"look","path":"/sdcard/DeepSeekGirl/inbox/1.jpg","question":"你看到了什么"}  看用户上传到 inbox 的图片（视觉模型）',
+    '15b. {"action":"look","path":"/sdcard/DCIM/Camera/1.jpg","question":"图里有什么字"}  看其他本地图片（只做 OCR）',
+    '15c. {"action":"look","url":"https://example.com/a.jpg","question":"图里有什么字"}  看网络图片（只做 OCR）',
+    '16. {"action":"look_screen","question":"屏幕上有什么字"}  截屏后只做 OCR',
+    '17. {"action":"look_latest","question":"最近照片里有什么字"}  最近照片只做 OCR',
     "",
     "硬性规则：",
     "- 优先点击节点编号，不要凭空猜坐标。",
@@ -843,8 +861,8 @@ var SYSTEM_PROMPT = [
     "- 不要打开支付、银行、短信、电话类应用。",
     "- 可以逛应用商店、下载软件；但系统安装器/未知来源确认出现时必须 blocked，等用户手动安装。",
     "- 短视频/娱乐：可 open_app 抖音 com.ss.android.ugc.aweme、B站 tv.danmaku.bili、小红书 com.xingin.xhs；只看，不点赞、不评论、不发布、不购买、不私信。",
-    "- 需要看颜色、长相、照片、图标或画面内容时，用 look / look_screen / look_latest，不要只靠 OCR 文字猜。",
-    "- 看图会把图片发到配置的视觉模型；不要看支付、银行、验证码、身份证、密码和别人的隐私聊天。",
+    "- 只有用户上传到 /sdcard/DeepSeekGirl/inbox/ 的图片才用视觉模型 look；屏幕、相册旧照片、网络图一律用 look_screen / look_latest / look 的 OCR 结果，不要要求视觉描述。",
+    "- 不要看支付、银行、验证码、身份证、密码和别人的隐私聊天；用户上传的图也要先判断是否涉及这些。",
     "- 同一动作重复两次仍无效，就 back 或 blocked。",
     "- 不确定时 wait 或 blocked，不要乱点。",
     "- 只有任务真正完成才输出 done。"
@@ -864,7 +882,8 @@ var THOUGHT_SYSTEM_PROMPT = [
     "绝不能删 /sdcard/DeepSeekGirl/memory、remote、persona.md 或 /sdcard/PhoneAgent；这些是她的记忆和代理代码。",
     "不要选择：支付、银行、电话、短信、SIM、移动网络、社交发帖、购物、改系统设置、恢复出厂。",
     "可以逛应用商店、下载软件；但不要自己点安装器，安装必须等用户确认。",
-    "想看照片或屏幕时，在任务里明确写“看最近的照片”或“看当前屏幕”；涉及支付、银行、验证码、身份证和隐私聊天时不要看。",
+    "想看照片或屏幕时，在任务里明确写“看最近的照片”或“看当前屏幕”；这些只做本地 OCR，不会用视觉模型。",
+    "只有用户上传到 /sdcard/DeepSeekGirl/inbox/ 的图片才用视觉模型；涉及支付、银行、验证码、身份证和隐私聊天时不要看。",
     "如果只想安静待着或观察，task 写 LOOK_AROUND。"
 ].join("\n");
 
@@ -1045,6 +1064,22 @@ function lookWithVision(img, question, label) {
     var answer = visionChat(b64, question);
     addLog("看图：" + label + " · " + answer.substring(0, 120));
     return "我看到了（" + label + "）：\n" + answer.substring(0, 1800);
+}
+
+function lookWithOcr(img, label) {
+    var lines = ocrImageText(img);
+    if (!lines.length) {
+        addLog("OCR 看图：" + label + " · 没有文字");
+        return "我用 OCR 看了（" + label + "），没有识别到文字。";
+    }
+    var text = lines.join("\n");
+    addLog("OCR 看图：" + label + " · " + text.substring(0, 100));
+    return "我用 OCR 看了（" + label + "）：\n" + text.substring(0, 1800);
+}
+
+function isUserImagePath(p) {
+    p = String(p || "");
+    return p.indexOf(USER_IMAGE_DIR) === 0;
 }
 
 function parseAction(content) {
@@ -1289,19 +1324,23 @@ function executeAction(action, obs) {
             lookImg = images.read(action.path);
         }
         if (!lookImg) throw new Error("图片读不出来: " + lookPath);
-        return lookWithVision(lookImg, action.question, lookPath);
+        // 只有用户上传到 inbox 的图才用视觉模型；其他一律本地 OCR。
+        if (!action.url && isUserImagePath(lookPath)) {
+            return lookWithVision(lookImg, action.question, lookPath);
+        }
+        return lookWithOcr(lookImg, lookPath);
     }
     if (kind === "look_screen") {
-        if (!ensureScreenCapture()) throw new Error("没有截屏权限，无法看图");
+        if (!ensureScreenCapture()) throw new Error("没有截屏权限，无法 OCR");
         var screenImg = images.captureScreen();
         if (!screenImg) throw new Error("截图失败");
-        return lookWithVision(screenImg, action.question, "当前屏幕");
+        return lookWithOcr(screenImg, "当前屏幕");
     }
     if (kind === "look_latest") {
         var latest = latestPhotoPath();
         var latestImg = images.read(latest);
         if (!latestImg) throw new Error("最近的照片读不出来: " + latest);
-        return lookWithVision(latestImg, action.question, latest);
+        return lookWithOcr(latestImg, latest);
     }
     throw new Error("无法执行: " + kind);
 }
@@ -1329,6 +1368,7 @@ function ensureGirlDirs() {
         files.ensureDir(DIARY_DIR);
         files.ensureDir(ASSET_DIR);
         files.ensureDir(APP_DIR);
+        files.ensureDir(USER_IMAGE_DIR);
         files.ensureDir(REMOTE_DIR);
         files.ensureDir(MEMORY_DIR);
         files.ensureDir(MEMORY_CHAT_DIR);
@@ -2036,6 +2076,31 @@ function handleRemoteText(text) {
     }
 }
 
+function downloadUserImage(att) {
+    if (!att || !att.url) return "";
+    if (att.type && String(att.type).indexOf("image/") !== 0) {
+        throw new Error("不是图片附件: " + att.type);
+    }
+    var url = String(att.url);
+    if (!/^https?:\/\//i.test(url)) throw new Error("附件地址不是 http/https");
+    var size = Number(att.size) || 0;
+    if (size > 20 * 1024 * 1024) throw new Error("图片超过 20MB，不接收");
+    files.ensureDir(USER_IMAGE_DIR);
+    var rawName = String(att.name || ("upload-" + Date.now() + ".jpg"));
+    rawName = rawName.replace(/[^a-zA-Z0-9._-]/g, "_");
+    if (!/\.(jpg|jpeg|png|webp|gif)$/i.test(rawName)) rawName += ".jpg";
+    var path = USER_IMAGE_DIR + Date.now() + "-" + rawName;
+    var res = http.get(url, { timeout: 60000 });
+    if (!res || res.statusCode < 200 || res.statusCode >= 300) {
+        throw new Error("附件下载失败: " + (res ? res.statusCode : "no response"));
+    }
+    var bytes = res.body.bytes();
+    if (!bytes || !bytes.length) throw new Error("附件是空的");
+    files.writeBytes(path, bytes);
+    addLog("收到用户图片: " + path + "（" + bytes.length + " bytes）");
+    return path;
+}
+
 function pollRemote() {
     if (!wifiOnly()) return;
     var since = "10m";
@@ -2077,6 +2142,18 @@ function pollRemote() {
         if (msg.title === "大肥鱼" || msg.title === "Dafeiyu" ||
             (msg.tags && msg.tags.indexOf("whale") !== -1)) continue;
         var text = trimText(msg.message || "");
+        var attachmentPath = "";
+        if (msg.attachment && msg.attachment.url) {
+            try {
+                attachmentPath = downloadUserImage(msg.attachment);
+            } catch (e) {
+                addLog("用户图片接收失败: " + e);
+            }
+        }
+        if (attachmentPath) {
+            text = "看看我上传的这张图片：" + attachmentPath +
+                (text ? "\n" + text : "");
+        }
         if (!text) continue;
         if (handled >= 3) break;
         handled++;
