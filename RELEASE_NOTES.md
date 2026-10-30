@@ -11,6 +11,7 @@
   - 长期记忆（facts/self/日记/每日回顾）
   - ntfy 远程聊天、主动找人
   - 文件读写/追加/删除、存储统计
+  - 看图：本地图片、网络图片、当前屏幕（需配置视觉模型）
   - 安全边界与任务 watchdog
 - `autox/setup_boot.js`：注册 AutoX 开机任务
 - `autox/boot_on.js` / `boot_off.js`：App 的一键开机开关
