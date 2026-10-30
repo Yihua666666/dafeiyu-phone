@@ -18,20 +18,29 @@
   - 悬浮面板 `开机自启：开/关`
   - 远程 `/boot on`、`/boot off`、`/boot status`
 - `app/DafeiyuChat/`：原生 WebView 聊天 App 源码
-- `dist/DafeiyuChat-1.0.0.apk`：可直接安装的 APK
+  - 主视觉图标、启动页、开机开关
   - 内置 93 张立绘
-  - 首次打开需填自己的 ntfy topic
+- `app/DafeiyuBoot/`：独立开机启动器源码
+  - 解决 AutoX 从 BOOT_COMPLETED 启动时被挂起的问题
+  - 后台启动被拦截时提供通知回退
+- `dist/DafeiyuChat-1.0.0.apk`：聊天 App
+- `dist/DafeiyuBoot-1.0.0.apk`：开机启动器
+- `LETTER.md`：写给所有安装者的一封信
 - `scripts/fetch_gallery.py`：下载 93 张立绘
 - `scripts/push_to_phone.ps1`：ADB 推送脚本
 - `docs/`：安装、架构、安全、排错
+
+## 设备
+
+不绑定 Redmi K60。Android 8+、能运行 AutoX.js 6.6.8 的手机都可以尝试；不同品牌主要是自启动、后台运行、悬浮窗权限名称不同。
 
 ## 安装
 
 1. 安装 AutoX.js 6.6.8，开无障碍、悬浮窗、前台服务、自启动
 2. 把 `autox/*.js` 放到 `/sdcard/PhoneAgent/`
 3. 运行 `agent.js`，填 DeepSeek API Key
-4. 安装 APK，点 ⚙ 填入 `/sdcard/DeepSeekGirl/remote/topic.txt` 的 topic
-5. 运行 `setup_boot.js` 注册开机自启
+4. 安装 `DafeiyuChat`，点 ⚙ 填入 `/sdcard/DeepSeekGirl/remote/topic.txt` 的 topic
+5. 安装 `DafeiyuBoot`，授权悬浮窗/通知/自启动，点“测试开机服务”
 
 详细步骤见 `docs/SETUP.md`。
 
@@ -39,8 +48,12 @@
 
 ```text
 DafeiyuChat-1.0.0.apk
-size:   27511283 bytes
-sha256: dceb65a64dcb294f5cab6c8ff9f24026cb271426615ee02280b712c28109edb4
+size:   29919798 bytes
+sha256: 43dd5a618e18df81d333f92c0dd8a530f1f1520d71c61c77a75021c5ce2a2ddb
+
+DafeiyuBoot-1.0.0.apk
+size:   2524020 bytes
+sha256: a27abc87d8665e823ddfde2bec2917f4600f6f34bd2a4fef278edecef5819fc4
 ```
 
 ## 已知限制

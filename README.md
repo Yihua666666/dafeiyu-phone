@@ -10,15 +10,19 @@
 - 用一个原生 Android APK 当聊天窗口
 - 不需要电脑常开，不需要 root
 
+![大肥鱼主视觉](docs/images/main-visual.png)
+
+> 项目作者写给你的一封信：[给所有想把她带回家的人](LETTER.md)
+
 ![93 张立绘画廊](docs/images/gallery.png)
 
 ## 她能做什么
 
 - **自己生活**：每 10–20 分钟自己想想做什么，写日记、翻笔记、看天气、刷视频、看番
 - **关屏也能醒**：到点自己点亮屏幕继续（可关闭）
-- **开机自启**：App / 悬浮面板 / 远程一键开关，重启后自己回来
+- **开机自启**：独立启动器 + App / 悬浮面板 / 远程开关，重启后自己回来
 - **长期记忆**：`facts.md`、`self.md`、每日对话、每日回顾
-- **远程聊天**：你在自己手机上通过 ntfy 找她，她在 K60 上回你
+- **远程聊天**：你在自己手机上通过 ntfy 找她，她在那台手机里回你
 - **主动找你**：闲着超过 90 分钟、且两小时内没找过你，会主动发一句
 - **93 张立绘**：App 里点 🖼 打开画廊，点一张就换头像
 - **能删自己的文件**：`/sdcard` 下除 `Android/` 外，文件和目录都可以删
@@ -27,12 +31,27 @@
 
 ### 0. 你需要
 
-- 一台闲置 Android 手机（Android 8+；本项目在 Redmi K60 / Android 15 / HyperOS 上测试）
+- 一台闲置 Android 手机（Android 8+，arm64）
 - Wi-Fi
 - 一个 DeepSeek API Key
 - 另一个手机或电脑，用来接收远程消息
 
 > 建议用**专用手机**：不要登录主微信、主支付、主邮箱或唯一 2FA。
+
+**设备说明**
+
+项目不绑定某一台手机。主程序是 AutoX.js + 普通 Android App，任何能正常跑 AutoX.js 6.6.8 的 Android 8+ 手机都可以尝试。
+
+| 系统 | 测试/适配情况 |
+|---|---|
+| HyperOS / MIUI（Redmi K60，Android 15） | 开发机，已验证 |
+| Android 原生 / Pixel 类 | 理论可用，开机启动器最稳 |
+| ColorOS / realme UI | 可用，需要允许自启动、后台运行 |
+| OriginOS / Funtouch | 可用，需要允许自启动、后台高耗电 |
+| EMUI / HarmonyOS（Android 底） | 可用，需要“应用启动管理”手动管理 |
+| Samsung One UI | 可用，需要把 AutoX 和启动器移出“休眠应用” |
+
+不同 ROM 的权限名字不一样，思路都是：**允许自启动、允许后台运行、允许悬浮窗、电池不限制**。
 
 ### 1. 安装 AutoX.js
 
@@ -41,7 +60,7 @@
 - 无障碍服务
 - 悬浮窗权限
 - 电池 → 无限制
-- 自启动（MIUI：安全中心 → 自启动管理）
+- 自启动 / 后台运行（不同 ROM 名字不同）
 - AutoX 菜单里的 **前台服务**
 
 ### 2. 放入脚本
@@ -52,6 +71,8 @@
 /sdcard/PhoneAgent/agent.js
 /sdcard/PhoneAgent/chat.js
 /sdcard/PhoneAgent/setup_boot.js
+/sdcard/PhoneAgent/boot_on.js
+/sdcard/PhoneAgent/boot_off.js
 ```
 
 也可以用 ADB：
@@ -91,23 +112,44 @@ Agent 会自动生成一个私密 topic：
 
 topic 是密码，不要发到公开地方。
 
-### 5. 开机自启（可选）
+### 5. 开机自启（推荐用独立启动器）
 
-三种开法，任选其一：
+AutoX 自己的 `BOOT_COMPLETED` 任务在部分系统上会跑在“无 UI 的后台上下文”，脚本能写一行启动日志，但随后被系统挂起，面板和远程桥都不工作。所以推荐装 **DafeiyuBoot**：
 
-1. **App**：右上角 **开机** → 设置 → 打开“开机自启”
-2. **悬浮面板**：点 `开机自启：开`
-3. **AutoX.js** 运行一次：
+```text
+dist/DafeiyuBoot-1.0.0.apk
+```
+
+它做一件事：
+
+```text
+BOOT_COMPLETED
+  → 前台服务
+  → 等系统稳定
+  → 打开 AutoX 的 ShortcutActivity
+  → 在正常 UI 上下文启动 agent.js
+```
+
+安装后打开“大肥鱼启动器”：
+
+1. 允许悬浮窗
+2. 允许通知
+3. 电池 → 无限制
+4. 系统设置里允许它**自启动**
+5. 如果有“后台弹出界面”权限，也允许
+6. 点“测试开机服务”，确认能拉起大肥鱼
+
+如果系统仍然拦截后台启动，启动器会留一条通知：“大肥鱼还没起来，点一下让她回家”。点通知即可启动。
+
+**备选：AutoX 直接开机任务**
+
+如果你不想装启动器，也可以在 App 里点 **开机** → 设置，或悬浮面板点 `开机自启：开`，或运行：
 
 ```text
 /sdcard/PhoneAgent/setup_boot.js
 ```
 
-它们都会写 AutoX 的 `IntentTaskDatabase`：
-
-```text
-BOOT_COMPLETED -> /sdcard/PhoneAgent/agent.js
-```
+这种方式在部分 ROM 上只能拉起后台脚本，面板可能不显示；能接受再使用。
 
 也可以远程发：
 
@@ -117,7 +159,20 @@ BOOT_COMPLETED -> /sdcard/PhoneAgent/agent.js
 /boot status
 ```
 
-重启后 AutoX 会自己拉起她。前提是 AutoX 的自启动权限还在。
+## 设备权限对照
+
+开机启动器装好后，按你的系统打开对应开关：
+
+| 系统 | 需要打开 |
+|---|---|
+| HyperOS / MIUI | 自启动、后台弹出界面、电池无限制、悬浮窗 |
+| ColorOS / realme UI | 自动启动、允许后台运行、悬浮窗、电池不优化 |
+| OriginOS | 自启动、后台高耗电、悬浮窗 |
+| EMUI | 应用启动管理 → 手动管理（自启动/关联启动/后台活动） |
+| One UI | 移出“休眠应用”，允许后台活动 |
+| Pixel / 原生 Android | 自启动、电池不优化即可 |
+
+不同版本名字可能略有差异，核心是：**不要让它被系统杀掉，也不要拦住它从后台打开 AutoX。**
 
 ## 远程聊天
 
@@ -208,8 +263,14 @@ app/DafeiyuChat/    原生 Android 聊天 App 源码
   assets/index.html 聊天界面
   assets/gallery.js 93 张立绘清单
   build.ps1         无需 Gradle 的 APK 构建脚本
+app/DafeiyuBoot/    独立开机启动器源码
+  BootReceiver.java 开机广播
+  BootService.java  前台服务 + 启动 AutoX
+  build.ps1
 dist/
   DafeiyuChat-1.0.0.apk
+  DafeiyuBoot-1.0.0.apk
+LETTER.md           给所有安装者的一封信
 scripts/
   fetch_gallery.py  下载 93 张立绘
   push_to_phone.ps1 推脚本和 APK

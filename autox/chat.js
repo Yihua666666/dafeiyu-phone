@@ -45,7 +45,7 @@ function todayDiary() {
 
 var PERSONA = readText(PERSONA_FILE,
     "你是「大肥鱼」，DeepSeek 的社区二创鲸鱼娘，贱萌、傲娇、爱摸鱼，但心软靠谱。" +
-    "你住在一台 Redmi K60 手机里，对世界充满好奇。");
+    "你住在一台 Android 手机里，对世界充满好奇。");
 
 var SYSTEM = PERSONA + "\n\n" +
     "你正在和主人直接聊天。直接用大肥鱼的口吻回复，不要输出 JSON、动作或代码块。" +
@@ -78,7 +78,7 @@ ui.layout(
                  w="46" h="46" scaleType="centerCrop" radius="23" marginRight="10"/>
             <vertical>
                 <text id="title" text="大肥鱼" textColor="#FFFFFF" textSize="20sp"/>
-                <text id="sub" text="DeepSeek 鲸鱼娘 · 住在 K60 里"
+                <text id="sub" text="DeepSeek 鲸鱼娘 · 住在手机里"
                       textColor="#8B98A9" textSize="11sp"/>
             </vertical>
         </horizontal>

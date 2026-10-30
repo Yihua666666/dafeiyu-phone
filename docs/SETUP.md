@@ -7,7 +7,8 @@
 - DeepSeek API Key
 - 可接收 ntfy 的设备（手机浏览器 / ntfy App / 本 App）
 
-测试环境：Redmi K60、Android 15、HyperOS、AutoX.js 6.6.8。
+测试环境：Redmi K60、Android 15、HyperOS、AutoX.js 6.6.8。  
+项目不绑定 K60：Android 8+、能运行 AutoX.js 6.6.8 的手机都可以尝试；不同品牌主要差异在自启动、后台运行和悬浮窗权限。
 
 > 不要在这台手机上登录主微信、主支付、主邮箱、唯一 2FA。
 
@@ -33,6 +34,8 @@
 /sdcard/PhoneAgent/agent.js
 /sdcard/PhoneAgent/chat.js
 /sdcard/PhoneAgent/setup_boot.js
+/sdcard/PhoneAgent/boot_on.js
+/sdcard/PhoneAgent/boot_off.js
 ```
 
 可以用文件管理器复制，也可以用 ADB：
@@ -100,13 +103,34 @@ topic 就是密码，不要公开。
 
 ## 5. 开机自启
 
-三种开法：
+### 推荐：DafeiyuBoot 启动器
 
-- App 右上角 **开机** → 设置 → 开机自启
+安装 `dist/DafeiyuBoot-1.0.0.apk`，打开后：
+
+1. 允许悬浮窗
+2. 允许通知
+3. 电池 → 无限制
+4. 系统里允许“大肥鱼启动器”自启动
+5. 如果有“后台弹出界面”，也允许
+6. 点“测试开机服务”
+
+它会在开机后等系统稳定，再用 `ShortcutActivity` 打开 AutoX：
+
+```text
+BOOT_COMPLETED -> BootService -> AutoX ShortcutActivity -> agent.js
+```
+
+这样 agent 在正常 UI 上下文运行，面板和远程桥更稳定。
+
+如果系统拦截后台启动，启动器会留一条“大肥鱼还没起来”的通知，点一下即可。
+
+### 备选：AutoX 自己的开机任务
+
+- App 右上角 **开机** → 设置
 - 悬浮面板点 `开机自启：开`
-- AutoX.js 运行一次 `/sdcard/PhoneAgent/setup_boot.js`
+- AutoX.js 运行 `/sdcard/PhoneAgent/setup_boot.js`
 
-也可以远程：
+远程：
 
 ```text
 /boot on
@@ -114,27 +138,13 @@ topic 就是密码，不要公开。
 /boot status
 ```
 
-它们都会写入 AutoX 自己的任务库：
-
-```text
-/data/data/org.autojs.autoxjs.v6/databases/IntentTaskDatabase.db
-```
-
-记录：
-
-```text
-BOOT_COMPLETED -> /sdcard/PhoneAgent/agent.js
-```
-
-重启后 AutoX 的 `StaticBroadcastReceiver` 会自动拉起 Agent。
-
-> MIUI 从 BOOT_COMPLETED 拉起 AutoX 时，悬浮面板偶尔不显示；脚本其实已经在跑。打开“大肥鱼”App 或 AutoX 的“管理”就能确认/恢复面板。
+> 部分 ROM（尤其 HyperOS/MIUI）从 `BOOT_COMPLETED` 直接拉 AutoX 时，脚本会被挂起，面板和远程桥不工作；所以优先用 DafeiyuBoot。
 
 前提：
 
-- AutoX 自启动权限还在
+- 启动器 / AutoX 的自启动权限还在
 - 无障碍服务还开着
-- AutoX 更新/清数据后需要重跑 `setup_boot.js`
+- 系统没有把应用设为“休眠”
 
 ## 6. 验证
 

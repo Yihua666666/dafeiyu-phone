@@ -1,7 +1,7 @@
 # 架构
 
 ```text
-┌────────────────────────────── K60 ──────────────────────────────┐
+┌───────────────────── Android 手机 ─────────────────────────────┐
 │                                                                  │
 │  AutoX.js (无障碍 + 悬浮窗)                                      │
 │    ├─ agent.js                                                   │
@@ -11,7 +11,9 @@
 │    │   ├─ selfThink() 每 10–20 分钟自主活动                       │
 │    │   ├─ memory/ 事实、自述、日记、每日回顾                       │
 │    │   └─ remote bridge 轮询 ntfy                                 │
-│    └─ setup_boot.js 注册 BOOT_COMPLETED 任务                     │
+│    ├─ setup_boot.js 可选：注册 AutoX 开机任务                    │
+│    └─ DafeiyuBoot 开机启动器（推荐）                              │
+│         └─ BOOT_COMPLETED → 前台服务 → ShortcutActivity          │
 │                                                                  │
 │  DafeiyuChat APK (WebView)                                       │
 │    └─ Java bridge → ntfy publish/poll                            │
