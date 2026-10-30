@@ -34,6 +34,16 @@ header img{width:44px;height:44px;border-radius:50%;object-fit:cover;border:1px 
   color:#7ee2a8;font-size:12px;font-weight:600;padding:7px 8px;
   border:1px solid #2f7a4f;border-radius:10px;line-height:1;
 }
+#splash{
+  position:fixed;inset:0;z-index:100;background:#0b0e14;
+  display:flex;align-items:center;justify-content:center;
+  transition:opacity .45s ease;
+}
+#splash.hidden{opacity:0;pointer-events:none}
+#splash img{
+  width:min(78vw,560px);height:auto;border-radius:28px;
+  box-shadow:0 24px 80px rgba(47,107,255,.32);
+}
 header img{cursor:pointer}
 .gallery-panel{
   position:fixed;inset:0;z-index:50;background:rgba(8,11,16,.96);
@@ -127,6 +137,7 @@ footer{
 </style>
 </head>
 <body>
+<div id="splash"><img src="main-visual.png" alt="大肥鱼"></div>
 <header>
   <img id="avatar" src="avatar.jpg" alt="大肥鱼" title="点一下换一张">
   <div class="who">
@@ -180,7 +191,7 @@ footer{
     messages.push({
       role:"assistant",
       text: topic ? "本鱼在呢。今天想聊点啥？🐋" :
-        "先点右上角 ⚙，把 K60 上 agent 的 ntfy topic 填进来。\ntopic 在 /sdcard/DeepSeekGirl/remote/topic.txt。",
+        "先点右上角 ⚙，把手机上 agent 的 ntfy topic 填进来。\ntopic 在 /sdcard/DeepSeekGirl/remote/topic.txt。",
       ts:Date.now()/1000
     });
   }
@@ -487,7 +498,7 @@ footer{
     var text = input.value.trim();
     if (!text) return;
     if (!topic) {
-      add("assistant", "先点右上角 ⚙，把 K60 上 agent 的 ntfy topic 填进来。", Date.now()/1000);
+      add("assistant", "先点右上角 ⚙，把手机上 agent 的 ntfy topic 填进来。", Date.now()/1000);
       return;
     }
     input.value = "";
@@ -526,6 +537,10 @@ footer{
     }
   });
 
+  setTimeout(function () {
+    var splash = document.getElementById("splash");
+    if (splash) splash.classList.add("hidden");
+  }, 1400);
   buildGallery();
   setAvatar(avatarIndex);
   render();

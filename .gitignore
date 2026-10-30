@@ -1,6 +1,8 @@
 # APK build output
 app/DafeiyuChat/build/
 app/DafeiyuChat/debug.keystore
+app/DafeiyuBoot/build/
+app/DafeiyuBoot/debug.keystore
 
 # Fetched illustrations (run scripts/fetch_gallery.py)
 app/DafeiyuChat/assets/*.jpg
