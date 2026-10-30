@@ -269,25 +269,35 @@ function configure() {
                     toastSafe("API Key 为空，未保存");
                     return;
                 }
+                // 先把主模型存下来：后面的视觉配置即使取消，也不能把 API Key 丢了。
+                store.put("apiKey", apiKey);
+                store.put("baseUrl", baseUrl);
+                store.put("model", modelName);
+                addLog("配置已更新：model=" + modelName + " base=" + baseUrl);
                 dialogs.prompt("视觉模型（看图用；留空=关闭看图。例：gpt-4o-mini / Qwen2.5-VL-32B-Instruct）", visionModel, function (vm) {
-                    if (vm === null) return;
+                    if (vm === null) {
+                        toastSafe("主配置已保存，视觉配置未改");
+                        return;
+                    }
                     dialogs.prompt("视觉 Base URL（留空=同主模型）", visionBase, function (vb) {
-                        if (vb === null) return;
+                        if (vb === null) {
+                            toastSafe("主配置已保存，视觉配置未改");
+                            return;
+                        }
                         dialogs.prompt("视觉 API Key（留空=同主 Key）", visionKey, function (vk) {
-                            if (vk === null) return;
+                            if (vk === null) {
+                                toastSafe("主配置已保存，视觉配置未改");
+                                return;
+                            }
                             visionModel = trimText(vm);
                             visionBase = trimText(vb);
                             visionKey = trimText(vk);
-                            store.put("apiKey", apiKey);
-                            store.put("baseUrl", baseUrl);
-                            store.put("model", modelName);
                             store.put("visionModel", visionModel);
                             store.put("visionBase", visionBase);
                             store.put("visionKey", visionKey);
                             setStatus("待命", "#3FB950");
                             toastSafe(visionModel ? "配置已保存，看图已开" : "配置已保存，看图未开");
-                            addLog("配置已更新：model=" + modelName + " base=" + baseUrl +
-                                " vision=" + (visionModel || "off"));
+                            addLog("视觉配置：" + (visionModel || "off"));
                         });
                     });
                 });
