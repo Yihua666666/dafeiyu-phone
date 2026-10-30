@@ -17,11 +17,13 @@
 /sdcard/DeepSeekGirl/inbox/
 ```
 
-两种上传方式：
+三种上传方式：
 
-1. 在 ntfy App / 浏览器里给 topic 附一张图  
+1. 在聊天 App 里点输入框左边的 **📎** 选图  
+   图片会作为 ntfy 附件发出，agent 下载到 `inbox/` 后自动看。
+2. 在 ntfy App / 浏览器里给 topic 附一张图  
    消息里的附件会被 agent 下载到 `inbox/`，然后自动进入看图任务。
-2. 直接把图片放进 `/sdcard/DeepSeekGirl/inbox/`  
+3. 直接把图片放进 `/sdcard/DeepSeekGirl/inbox/`  
    然后说“看看我上传的这张图”。
 
 只有 `inbox/` 里的图片会走视觉模型。相册、屏幕、网络图都不会。

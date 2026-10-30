@@ -34,6 +34,12 @@ header img{width:44px;height:44px;border-radius:50%;object-fit:cover;border:1px 
   color:#7ee2a8;font-size:12px;font-weight:600;padding:7px 8px;
   border:1px solid #2f7a4f;border-radius:10px;line-height:1;
 }
+#attach{
+  flex:0 0 auto;width:42px;height:42px;border:1px solid var(--line);border-radius:12px;
+  background:var(--panel2);color:var(--text);font-size:19px;line-height:1;cursor:pointer;
+}
+#attach:disabled{opacity:.45}
+#fileInput{display:none}
 #splash{
   position:fixed;inset:0;z-index:100;background:#0b0e14;
   display:flex;align-items:center;justify-content:center;
@@ -175,6 +181,8 @@ footer{
 </div>
 <main id="messages"></main>
 <footer>
+  <button id="attach" title="上传图片">📎</button>
+  <input type="file" id="fileInput" accept="image/*">
   <textarea id="input" rows="1" placeholder="和她说点什么…"></textarea>
   <button id="send">发送</button>
 </footer>
@@ -199,6 +207,8 @@ footer{
   var main = document.getElementById("messages");
   var input = document.getElementById("input");
   var send = document.getElementById("send");
+  var attach = document.getElementById("attach");
+  var fileInput = document.getElementById("fileInput");
   var dot = document.getElementById("dot");
   var statusEl = document.getElementById("status");
   var avatarEl = document.getElementById("avatar");
@@ -515,6 +525,49 @@ footer{
       schedulePoll(1500);
     }
   }
+
+  function uploadPickedImage(file) {
+    if (!file) return;
+    if (!topic) {
+      add("assistant", "先点右上角 ⚙，把 topic 填进来，再上传图片。", Date.now()/1000);
+      return;
+    }
+    if (!/^image\//.test(file.type || "")) {
+      add("assistant", "这个不是图片文件。", Date.now()/1000);
+      return;
+    }
+    if (file.size > 12 * 1024 * 1024) {
+      add("assistant", "图片太大了，先压到 12MB 以内。", Date.now()/1000);
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = async function() {
+      attach.disabled = true;
+      add("user", "🖼 " + (file.name || "图片") + " 已上传");
+      try {
+        var r = await nativeCall("uploadImage", topic, String(reader.result), file.name || "upload.jpg");
+        if (!r.ok) {
+          add("assistant", "图片没传上去：" + (r.body || r.status), Date.now()/1000);
+        } else {
+          setStatus("图片已上传，等她看", "on");
+          schedulePoll(800);
+        }
+      } catch(e) {
+        add("assistant", "图片没传上去：" + e.message, Date.now()/1000);
+      } finally {
+        attach.disabled = false;
+        fileInput.value = "";
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  attach.addEventListener("click", function() {
+    fileInput.click();
+  });
+  fileInput.addEventListener("change", function() {
+    if (fileInput.files && fileInput.files[0]) uploadPickedImage(fileInput.files[0]);
+  });
 
   send.addEventListener("click", sendMessage);
   input.addEventListener("keydown", function(e) {

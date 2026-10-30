@@ -115,6 +115,7 @@ Vision Key:    留空=同主 Key
 
 上传方式：
 
+- 在聊天 App 里点输入框左边的 **📎** 选图
 - 在 ntfy App / 浏览器里给 topic 附一张图（会自动进 `/sdcard/DeepSeekGirl/inbox/`）
 - 或直接把图片放进 `/sdcard/DeepSeekGirl/inbox/`
 
