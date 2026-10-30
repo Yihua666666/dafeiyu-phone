@@ -1,2 +1,2 @@
-3d238b7d5dfe080d70f5eb88fadba267aec7ec15d18992a4371ba54d8a348800  DafeiyuChat-1.0.0.apk
+bffde92a846d90635a16040077f84c52923620d17c0b8fd932ff7d0fa8be435c  DafeiyuChat-1.0.0.apk
 a27abc87d8665e823ddfde2bec2917f4600f6f34bd2a4fef278edecef5819fc4  DafeiyuBoot-1.0.0.apk

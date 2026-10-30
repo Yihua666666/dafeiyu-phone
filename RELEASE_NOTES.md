@@ -50,7 +50,7 @@
 ```text
 DafeiyuChat-1.0.0.apk
 size:   29923894 bytes
-sha256: 3d238b7d5dfe080d70f5eb88fadba267aec7ec15d18992a4371ba54d8a348800
+sha256: bffde92a846d90635a16040077f84c52923620d17c0b8fd932ff7d0fa8be435c
 
 DafeiyuBoot-1.0.0.apk
 size:   2524020 bytes

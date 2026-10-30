@@ -543,12 +543,12 @@ footer{
     var reader = new FileReader();
     reader.onload = async function() {
       attach.disabled = true;
-      add("user", "🖼 " + (file.name || "图片") + " 已上传");
       try {
         var r = await nativeCall("uploadImage", topic, String(reader.result), file.name || "upload.jpg");
         if (!r.ok) {
           add("assistant", "图片没传上去：" + (r.body || r.status), Date.now()/1000);
         } else {
+          add("user", "🖼 " + (file.name || "图片") + " 已上传");
           setStatus("图片已上传，等她看", "on");
           schedulePoll(800);
         }
