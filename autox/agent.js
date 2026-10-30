@@ -296,8 +296,9 @@ function configure() {
                             store.put("visionBase", visionBase);
                             store.put("visionKey", visionKey);
                             setStatus("待命", "#3FB950");
-                            toastSafe(visionModel ? "配置已保存，看图已开" : "配置已保存，看图未开");
-                            addLog("视觉配置：" + (visionModel || "off"));
+                            var effective = effectiveVisionModel();
+                            toastSafe(effective ? "配置已保存，看图：" + effective : "配置已保存，看图未开");
+                            addLog("视觉配置：" + (effective || "off"));
                         });
                     });
                 });
@@ -916,18 +917,32 @@ function chat(messages, noJsonMode) {
     return String(content);
 }
 
+function effectiveVisionModel() {
+    if (visionModel) return visionModel;
+    // DeepSeek 的 deepseek-flash 本身支持图片；用同一个 Key/Base 就能看。
+    if (baseUrl.indexOf("api.deepseek.com") !== -1) return "deepseek-flash";
+    if (/(vision|vl|gpt-4o|gemini|claude-3)/i.test(modelName)) return modelName;
+    return "";
+}
+
 function visionChat(imageBase64, question) {
-    if (!visionModel) {
-        throw new Error("没有配置视觉模型；先点设置，填“视觉模型”（base/key 可复用主模型）");
+    var vModel = effectiveVisionModel();
+    if (!vModel) {
+        throw new Error("没有可用的视觉模型；在设置里填“视觉模型”，或把主模型换成 deepseek-flash");
     }
     if (!wifiOnly()) throw new Error("没有 Wi-Fi，拒绝把图片发出去");
     var vBase = (visionBase || baseUrl).replace(/\/+$/, "");
+    // DeepSeek 的视觉示例使用 https://api.deepseek.com（不带 /v1）；
+    // 主对话仍可走 /v1，视觉这里自动退回不带 /v1 的地址。
+    if (!visionBase && vBase.indexOf("api.deepseek.com/v1") !== -1) {
+        vBase = "https://api.deepseek.com";
+    }
     var vKey = visionKey || apiKey;
     if (!vKey) throw new Error("没有视觉 API Key");
     var url = vBase + "/chat/completions";
     var q = trimText(question) || "你看到了什么？尽量具体，但只说画面里真的有的东西。";
     var payload = {
-        model: visionModel,
+        model: vModel,
         messages: [
             {
                 role: "system",
@@ -946,6 +961,10 @@ function visionChat(imageBase64, question) {
         max_tokens: 500,
         stream: false
     };
+    // 看图只要描述，不要思维链；DeepSeek 默认开启 thinking，会吃掉 max_tokens。
+    if (/deepseek/i.test(vBase) || /deepseek/i.test(vModel)) {
+        payload.thinking = { type: "disabled" };
+    }
     var res = http.postJson(url, payload, {
         headers: {
             "Authorization": "Bearer " + vKey,
@@ -971,7 +990,10 @@ function visionChat(imageBase64, question) {
         }
         content = pieces.join("\n");
     }
-    if (!content) throw new Error("视觉模型返回空内容");
+    if (!content) {
+        addLog("视觉返回空内容，原始响应：" + body.substring(0, 600));
+        throw new Error("视觉模型返回空内容（可尝试关闭 thinking 或调大 max_tokens）");
+    }
     return trimText(String(content));
 }
 

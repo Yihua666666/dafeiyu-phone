@@ -101,10 +101,12 @@ Model:     deepseek-flash
 
 **看图（可选）**
 
-DeepSeek 的文本模型不能直接看图。要让她看照片、网络图片或当前屏幕，需要在设置里再填一个 **视觉模型**：
+DeepSeek 的 **`deepseek-flash`** 支持图片输入。主模型填 `deepseek-flash` 时，看图会自动复用同一个 Key/Base，不需要再配视觉模型。
+
+如果你主模型用的是 `deepseek-chat`，或想换成别的视觉服务，再填：
 
 ```text
-Vision Model:  gpt-4o-mini / Qwen2.5-VL-32B-Instruct / ...
+Vision Model:  deepseek-flash / gpt-4o-mini / Qwen2.5-VL-32B-Instruct / ...
 Vision Base:   留空=同主模型；换 OpenRouter 等时填对应 /v1
 Vision Key:    留空=同主 Key
 ```

@@ -19,7 +19,9 @@
   → 大肥鱼继续行动
 ```
 
-DeepSeek 的普通文本模型不能看图。必须单独配一个支持 `image_url` 的视觉模型。
+DeepSeek 的 **`deepseek-flash`** 本身支持图片输入（JPEG / PNG / GIF / WebP），所以主模型是 `deepseek-flash` 时，直接复用同一个 Key/Base 就能看图，不需要额外视觉模型。
+
+如果主模型是 `deepseek-chat`，或者想换 OpenRouter、Qwen-VL 等服务，再单独填 Vision Model。
 
 ## 配置
 
@@ -27,16 +29,25 @@ DeepSeek 的普通文本模型不能看图。必须单独配一个支持 `image_
 
 ```text
 API Key / Base URL / Model       主模型，负责聊天和决策
-Vision Model                    视觉模型，留空=关闭看图
+Vision Model                    视觉模型，留空=自动（DeepSeek 用 deepseek-flash）
 Vision Base                     留空=复用主 Base URL
 Vision Key                      留空=复用主 Key
 ```
 
-只要 `Vision Model` 留空，看图动作会直接报错，不会偷偷把图片发出去。
+主 Base 是 `api.deepseek.com` 时，留空会自动用 `deepseek-flash` 看图；不会拿 `deepseek-chat` 硬塞图片。
 
 ## 可用的视觉服务
 
 任何兼容 OpenAI `chat/completions` + `image_url` 的服务都可以。常见配置：
+
+### DeepSeek
+
+```text
+主 Model:      deepseek-flash
+Vision Model:  留空即可
+Vision Base:   留空
+Vision Key:    留空
+```
 
 ### OpenRouter
 
