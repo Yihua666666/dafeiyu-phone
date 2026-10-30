@@ -10,6 +10,9 @@
 - 用一个原生 Android APK 当聊天窗口
 - 不需要电脑常开，不需要 root
 
+[![Memory](https://img.shields.io/badge/Memory-Local%20File%20System-2F6BFF)](autox/agent.js)
+[![Android](https://img.shields.io/badge/Android-8%2B-3DDC84)](https://www.android.com/)
+
 ![大肥鱼主视觉](docs/images/main-visual.png)
 
 > 项目作者写给你的一封信：[给所有想把她带回家的人](LETTER.md)
@@ -195,6 +198,8 @@ ntfy.sh 在部分网络下不通，所以代码换成了 `ntfy.envs.net`。
 消息不是端到端加密，不要发密码、验证码、支付信息。
 
 ## 长期记忆
+
+> 这不是 Mem0 / Letta / Zep 之类的外部记忆库，也没有额外依赖。它是项目内置的**本地文件记忆系统**，实现就在 [`autox/agent.js`](autox/agent.js)：`appendMemory`、`recallMemory`、`appendFact`、`dailyReview`。
 
 全部在手机本地：
 
