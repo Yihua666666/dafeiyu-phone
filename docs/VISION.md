@@ -1,0 +1,120 @@
+# 看图能力
+
+大肥鱼现在可以看三种图：
+
+- **本地图片**：相册、下载目录、她自己房间里的图
+- **网络图片**：给一个 http/https 图片地址
+- **当前屏幕**：截屏后看画面，不再只靠 OCR 文字
+
+## 它不是“手机自己长出了眼睛”
+
+图片在手机本地读取、缩放、转成 base64，然后发给你配置的**视觉模型**。  
+模型返回一段文字描述，这段描述再回到 agent 的决策上下文里。
+
+```text
+图片 / 截图
+  → AutoX 本地读取、缩放
+  → 视觉模型（OpenAI 兼容 /chat/completions）
+  → 文字描述
+  → 大肥鱼继续行动
+```
+
+DeepSeek 的普通文本模型不能看图。必须单独配一个支持 `image_url` 的视觉模型。
+
+## 配置
+
+在 AutoX 悬浮面板点 **设置**，依次填：
+
+```text
+API Key / Base URL / Model       主模型，负责聊天和决策
+Vision Model                    视觉模型，留空=关闭看图
+Vision Base                     留空=复用主 Base URL
+Vision Key                      留空=复用主 Key
+```
+
+只要 `Vision Model` 留空，看图动作会直接报错，不会偷偷把图片发出去。
+
+## 可用的视觉服务
+
+任何兼容 OpenAI `chat/completions` + `image_url` 的服务都可以。常见配置：
+
+### OpenRouter
+
+```text
+Vision Base:  https://openrouter.ai/api/v1
+Vision Model: qwen/qwen2.5-vl-72b-instruct
+             或 google/gemini-2.0-flash-001
+Vision Key:   你的 OpenRouter Key
+```
+
+### 硅基流动 SiliconFlow
+
+```text
+Vision Base:  https://api.siliconflow.cn/v1
+Vision Model: Qwen/Qwen2.5-VL-32B-Instruct
+Vision Key:   你的 SiliconFlow Key
+```
+
+### OpenAI
+
+```text
+Vision Base:  https://api.openai.com/v1
+Vision Model: gpt-4o-mini
+Vision Key:   你的 OpenAI Key
+```
+
+### 本地 Ollama（PC 常开）
+
+```text
+Vision Base:  http://<电脑局域网 IP>:11434/v1
+Vision Model: qwen2.5vl:7b
+Vision Key:   ollama（随便填，Ollama 不校验）
+```
+
+这种方式需要 PC 和手机在同一 Wi-Fi，且 PC 常开；和“完全脱离 PC”冲突，只适合调试。
+
+## 她怎么用
+
+任务里直接说：
+
+```text
+看看最近这张照片里有什么
+看看当前屏幕
+看看 https://example.com/a.jpg 是什么
+```
+
+agent 会选：
+
+```json
+{"action":"look_latest","question":"最近这张照片里有什么"}
+{"action":"look_screen","question":"屏幕上是什么"}
+{"action":"look","url":"https://example.com/a.jpg","question":"这是什么"}
+{"action":"look","path":"/sdcard/DCIM/Camera/IMG_001.jpg","question":"你看到了什么"}
+```
+
+自主思考时，她也可能自己选择“看最近的照片”或“看看窗外/相册”。
+
+## 隐私边界
+
+- 看图会把图片上传到你配置的视觉服务，不是纯本地识别。
+- 截屏可能包含通知、聊天、账号信息；她不应该看支付、银行、验证码、身份证和别人的隐私聊天。
+- 视觉模型返回的文字会进入模型上下文；图片本身不写进记忆目录。
+- 本地图片只允许 `/sdcard/` 下，不允许 `/sdcard/Android/`。
+- 网络图片只允许 `http/https`。
+- 没有 Wi-Fi 时不会发图。
+
+## 截屏权限
+
+`look_screen` 需要 MediaProjection 截屏权限。Android 14/15 第一次会弹出“分享或录制应用”，需要手动选择：
+
+- **整个屏幕**：能看所有应用
+- **单个应用**：只能看选中的应用
+
+AutoX 重启后，系统可能再次询问；如果卡在权限弹窗，先手动点一次“开始”。只想看相册里的照片时，用 `look` / `look_latest`，不需要截屏权限。
+
+## 限制
+
+- 没有配置视觉模型时，`look` 会失败，不会退回文本模型。
+- 部分“视觉模型”只支持图片 URL，不支持 data URL；这种服务需要先把图片上传到可访问地址，当前实现不处理。
+- 图片会缩放到最长边 1280、JPEG 80，细节特别小的图可能看不清。
+- 视觉描述可能出错；她应该以“我看到”开头，不把猜测写成事实。
