@@ -54,6 +54,8 @@ var remoteTopic = "";
 var remoteBusy = false;
 var remoteBackoffUntil = 0;
 var currentRemote = false;
+var FAST_HISTORY = 4;
+var FAST_MAX_TOKENS = 100;
 var MEMORY_DIR = GIRL_HOME + "memory/";
 var MEMORY_CHAT_DIR = MEMORY_DIR + "chat/";
 var MEMORY_SUMMARY_DIR = MEMORY_DIR + "summaries/";
@@ -896,17 +898,21 @@ var ROUTER_PROMPT = [
     "不要输出其他文字。"
 ].join("\n");
 
-function chat(messages, noJsonMode) {
+function chat(messages, noJsonMode, opts) {
+    opts = opts || {};
     if (!apiKey) throw new Error("没有 API Key，点“设置”填写");
     if (!wifiOnly()) throw new Error("没有 Wi-Fi，拒绝联网（这张 SIM 卡不允许使用流量）");
     var url = baseUrl.replace(/\/+$/, "") + "/chat/completions";
     var payload = {
         model: modelName,
         messages: messages,
-        temperature: 0.1,
-        max_tokens: 500,
+        temperature: opts.temperature == null ? 0.1 : opts.temperature,
+        max_tokens: opts.maxTokens || 500,
         stream: false
     };
+    if (opts.thinking === false && baseUrl.indexOf("api.deepseek.com") !== -1) {
+        payload.thinking = { type: "disabled" };
+    }
     if (!noJsonMode) {
         payload.response_format = { type: "json_object" };
     }
@@ -933,6 +939,11 @@ function chat(messages, noJsonMode) {
     }
     var content = data.choices[0].message.content;
     if (!content) throw new Error("LLM 返回空内容");
+    if (opts.logUsage && data.usage) {
+        addLog("chat tokens: in=" + (data.usage.prompt_tokens || 0) +
+            " out=" + (data.usage.completion_tokens || 0) +
+            " total=" + (data.usage.total_tokens || 0));
+    }
     return String(content);
 }
 
@@ -1843,26 +1854,78 @@ function remotePublish(text) {
     }
 }
 
-function remoteReply(text) {
+var FAST_PERSONA = [
+    "你是「大肥鱼」，DeepSeek 的社区二创鲸鱼娘，贱萌、傲娇、心软，自称本鱼。",
+    "现在在手机里和主人聊天。回复要短：通常一到两句，像真人打字，不要 JSON、动作、代码块或长篇解释。",
+    "可以偶尔用 *（心声）*，不要每句都用；不装、不编、不说教。",
+    "不碰 SIM、电话、短信、支付、账号密码、验证码。"
+].join("\n");
+
+var CANNED_REPLIES = [
+    { re: /^(在吗|在不在|在么|在嘛)[?？!！。\s]*$/, replies: ["在呢，本鱼没跑。🐋", "在呀，尾巴都摇起来了。", "在。刚在发呆，被你叫回来了。"] },
+    { re: /^(你好|嗨|hi|hello|哈喽)[~～!！。\s]*$/i, replies: ["嗨，本鱼在。", "你好呀，今天想聊什么？", "来啦，本鱼刚好闲着呢。"] },
+    { re: /^(早|早安|早上好)[~～!！。\s]*$/, replies: ["早呀，今天也要好好吃饭。", "早安，本鱼刚醒。", "早，先伸个懒腰。"] },
+    { re: /^(晚安|睡了|去睡了|先睡)[~～!！。\s]*$/, replies: ["晚安，本鱼也准备趴窝了。", "去睡吧，明天见。", "晚安，梦到小鱼干。"] },
+    { re: /^(哈哈+|笑死|hhh+|233+)[~～!！。\s]*$/i, replies: ["笑啥呢，分本鱼一口。", "这么好笑？尾巴都笑直了。", "乐吧，本鱼看着也开心。"] },
+    { re: /^(谢谢|多谢|谢啦|thanks|thank you)[~～!！。\s]*$/i, replies: ["跟本鱼还客气。", "不谢，记着本鱼的好就行。", "收到你的谢意，摇两下尾巴。"] },
+    { re: /^(好的|好|收到|ok|okay|嗯嗯|行)[~～!！。\s]*$/i, replies: ["收到。", "好，本鱼记下了。", "嗯，去吧。"] }
+];
+
+function cannedReply(text) {
+    var t = trimText(text);
+    for (var i = 0; i < CANNED_REPLIES.length; i++) {
+        if (CANNED_REPLIES[i].re.test(t)) {
+            var arr = CANNED_REPLIES[i].replies;
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+    }
+    return "";
+}
+
+function looksLikeAction(text) {
+    var t = trimText(text);
+    if (/^\/do(\s|$)/.test(t)) return true;
+    if (/^(我在|我在看|我刚|今天|刚才|哈哈|在吗|你好|晚安|早安|谢谢|好的|收到)/.test(t)) return false;
+    if (/^(我想|想)/.test(t) && !/(打开|帮我|去|查|搜|下载|安装|设置|提醒)/.test(t)) return false;
+    return /(打开|帮我|去|看看|查查|查一下|搜一下|搜索|下载|安装|写|记一下|删|设置|定个|提醒|播放|刷|看番|看视频|截屏|截图|拍|发|导航|天气|电量|存储|列目录|读文件|上传|识别)/.test(t);
+}
+
+function remoteReply(text, channel) {
+    var quick = cannedReply(text);
+    if (quick) {
+        appendMemory("assistant", quick, "remote");
+        remotePublish(quick);
+        addLog("快速回复（0 token）: " + quick);
+        return;
+    }
+
     var history = remoteHistoryLoad();
-    var remembered = recallMemory(text);
-    var contextNow = currentContextText();
-    var system = PERSONA + "\n\n" +
-        "你正在通过远程聊天和主人说话。直接回复，不要 JSON、动作或代码块。" +
-        "先看清你现在在做什么：\n" + contextNow + "\n" +
-        "短句、有梗、偶尔 *（心声）*；可以聊手机里的事和今天的日记。" +
-        "下面是你自己翻出来的长期记忆，能对上就用；对不上就别编。" +
-        "不要假装自己已经操作了手机；需要操作时可以直接做，或提醒主人。" +
-        "不要碰 SIM/电话/短信/支付/账号密码/验证码。\n\n" +
-        "长期记忆：\n" + remembered + "\n\n" +
-        "今天日记：\n" + readDiaryTail(12);
+    var recent = history.slice(-FAST_HISTORY);
+    var needMemory = /(记得|上次|之前|我说过|我说|日记|以前|后来|发生过)/.test(text);
+    var system = FAST_PERSONA;
+    if (channel === "wechat") {
+        system += "\n这是微信聊天：回复控制在 1–2 句，像真人随手回。";
+    } else if (channel === "qq") {
+        system += "\n这是 QQ 聊天：回复控制在 1–2 句，可以短一点。";
+    }
+    if (needMemory) {
+        system += "\n\n长期记忆（只挑对得上的）：\n" + recallMemory(text).substring(0, 1200) +
+            "\n今天日记：\n" + readDiaryTail(6);
+    }
+
     var msgs = [{ role: "system", content: system }];
-    var recent = history.slice(-10);
     for (var i = 0; i < recent.length; i++) {
         msgs.push({ role: recent[i].role, content: recent[i].content });
     }
     msgs.push({ role: "user", content: text });
-    var reply = chat(msgs, true);
+
+    var reply = chat(msgs, true, {
+        maxTokens: FAST_MAX_TOKENS,
+        thinking: false,
+        temperature: 0.7,
+        logUsage: true
+    });
+    reply = trimText(reply).substring(0, 300);
     history.push({ role: "user", content: text });
     history.push({ role: "assistant", content: reply });
     remoteHistorySave(history);
@@ -1872,16 +1935,11 @@ function remoteReply(text) {
 }
 
 function routeRemote(text) {
-    if (text.indexOf("/do ") === 0) {
-        return { mode: "action", task: trimText(text.substring(4)) };
+    if (/^\/do(\s|$)/.test(text)) {
+        return { mode: "action", task: trimText(text.replace(/^\/do\s*/, "")) };
     }
-    var content = chat([
-        { role: "system", content: ROUTER_PROMPT },
-        { role: "user", content: text }
-    ]);
-    var obj = parseJsonObject(content);
-    if (obj.mode === "action" && trimText(obj.task || "")) {
-        return { mode: "action", task: trimText(obj.task) };
+    if (looksLikeAction(text)) {
+        return { mode: "action", task: trimText(text) };
     }
     return { mode: "chat" };
 }
@@ -2012,7 +2070,7 @@ function isBootCommand(command) {
         command === "关掉开机自启";
 }
 
-function handleRemoteText(text) {
+function handleRemoteText(text, channel) {
     var command = trimText(text);
     if (isBootCommand(command)) {
         handleBootCommand(command);
@@ -2072,7 +2130,7 @@ function handleRemoteText(text) {
         addLog("远程任务: " + route.task);
         startRemoteAction(route.task);
     } else {
-        remoteReply(text);
+        remoteReply(text, channel || "remote");
     }
 }
 
@@ -2099,6 +2157,25 @@ function downloadUserImage(att) {
     files.writeBytes(path, bytes);
     addLog("收到用户图片: " + path + "（" + bytes.length + " bytes）");
     return path;
+}
+
+function remoteChannel(msg) {
+    var tags = (msg && msg.tags) || [];
+    for (var i = 0; i < tags.length; i++) {
+        var t = String(tags[i]).toLowerCase();
+        if (t === "wechat" || t === "weixin") return "wechat";
+        if (t === "qq" || t === "qqgroup") return "qq";
+    }
+    return "remote";
+}
+
+function remoteGroup(msg) {
+    var tags = (msg && msg.tags) || [];
+    for (var i = 0; i < tags.length; i++) {
+        var t = String(tags[i]).toLowerCase();
+        if (t === "group" || t === "群" || t === "qqgroup") return true;
+    }
+    return false;
 }
 
 function pollRemote() {
@@ -2155,12 +2232,19 @@ function pollRemote() {
                 (text ? "\n" + text : "");
         }
         if (!text) continue;
+        var channel = remoteChannel(msg);
+        var isGroup = remoteGroup(msg);
+        if (isGroup && !attachmentPath &&
+            text.indexOf("@") === -1 && text.indexOf("大肥鱼") === -1) {
+            addLog("群消息未@，跳过: " + text.substring(0, 60));
+            continue;
+        }
         if (handled >= 3) break;
         handled++;
         markUserContact();
-        appendMemory("user", text, "remote");
+        appendMemory("user", text, channel);
 
-        addLog("远程消息: " + text.substring(0, 120));
+        addLog("远程消息[" + channel + (isGroup ? "/群" : "") + "]: " + text.substring(0, 120));
         if (isBootCommand(text)) {
             handleBootCommand(text);
             continue;
@@ -2171,7 +2255,7 @@ function pollRemote() {
         }
         var remoteCmd = trimText(text);
         if (remoteCmd === "/stop" || remoteCmd === "停止" || remoteCmd === "停止任务") {
-            handleRemoteText(text);
+            handleRemoteText(text, channel);
             continue;
         }
         if (running) {
@@ -2179,7 +2263,7 @@ function pollRemote() {
             continue;
         }
         try {
-            handleRemoteText(text);
+            handleRemoteText(text, channel);
         } catch (e) {
             addLog("远程回复失败: " + e);
             remotePublish("呜，本鱼刚才卡住了：" + String(e).substring(0, 120));
