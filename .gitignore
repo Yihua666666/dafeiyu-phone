@@ -13,3 +13,6 @@ docs/sheets/
 .DS_Store
 Thumbs.db
 *.log
+
+# Build output under app
+app/DafeiyuChat/dist/

@@ -2,6 +2,7 @@ package com.deepseek.dafeiyu.chat;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.util.Base64;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 
@@ -68,6 +69,55 @@ public class NtfyBridge {
                 result = request("POST", BASE + t, text == null ? "" : text);
             } catch (Exception e) {
                 result = new Result(false, 0, "publish error: " + e);
+            }
+            deliver(callbackId, result);
+        });
+    }
+
+    /** Upload a picked image as an ntfy attachment; the phone agent downloads it into its inbox. */
+    @JavascriptInterface
+    public void uploadImage(String topic, String dataUrl, String filename, String callbackId) {
+        pool.execute(() -> {
+            Result result;
+            HttpURLConnection conn = null;
+            try {
+                String raw = dataUrl == null ? "" : dataUrl;
+                int comma = raw.indexOf(',');
+                if (raw.startsWith("data:") && comma >= 0) raw = raw.substring(comma + 1);
+                byte[] bytes = Base64.decode(raw, Base64.DEFAULT);
+                if (bytes.length == 0) throw new Exception("empty image");
+                if (bytes.length > 12 * 1024 * 1024) throw new Exception("image too large");
+
+                String name = filename == null ? "upload.jpg" : filename.replaceAll("[^A-Za-z0-9._-]", "_");
+                if (!name.matches("(?i).*\\.(jpg|jpeg|png|webp|gif)$")) name += ".jpg";
+                String mime = name.toLowerCase().endsWith(".png") ? "image/png"
+                        : name.toLowerCase().endsWith(".webp") ? "image/webp"
+                        : name.toLowerCase().endsWith(".gif") ? "image/gif" : "image/jpeg";
+
+                String t = URLEncoder.encode(topic, "UTF-8");
+                conn = (HttpURLConnection) new URL(BASE + t).openConnection();
+                conn.setConnectTimeout(15000);
+                conn.setReadTimeout(60000);
+                conn.setRequestMethod("PUT");
+                conn.setDoOutput(true);
+                conn.setRequestProperty("User-Agent", "DafeiyuChat/1.0");
+                conn.setRequestProperty("Filename", name);
+                conn.setRequestProperty("Title", "Master");
+                conn.setRequestProperty("Tags", "phone");
+                conn.setRequestProperty("Message", "uploaded image");
+                conn.setRequestProperty("Content-Type", mime);
+                conn.setFixedLengthStreamingMode(bytes.length);
+                try (OutputStream os = conn.getOutputStream()) {
+                    os.write(bytes);
+                }
+                int code = conn.getResponseCode();
+                InputStream stream = code >= 400 ? conn.getErrorStream() : conn.getInputStream();
+                String response = stream == null ? "" : readAll(stream);
+                result = new Result(code >= 200 && code < 300, code, response);
+            } catch (Exception e) {
+                result = new Result(false, 0, "upload error: " + e);
+            } finally {
+                if (conn != null) conn.disconnect();
             }
             deliver(callbackId, result);
         });
