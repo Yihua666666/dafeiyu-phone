@@ -92,6 +92,26 @@
 - 自启动 / 后台运行（不同 ROM 名字不同）
 - AutoX 菜单里的 **前台服务**
 
+**AutoX 不包含在 `DafeiyuChat` / `DafeiyuBoot` APK 里，必须单独安装。**  
+从 1.1.0 起，Release 附件已提供：
+
+```text
+AutoX.js-6.6.8.apk
+dafeiyu-phone-1.1.0-bundle.zip   # AutoX + Chat + Boot + 安装顺序
+```
+
+下载页：
+
+<https://github.com/Yihua666666/dafeiyu-phone/releases/tag/v1.1.0>
+
+安装顺序必须是：
+
+```text
+AutoX.js 6.6.8 → DafeiyuChat → DafeiyuBoot
+```
+
+只装 Chat/Boot 再问“为什么没有 AutoX”，启动器是拉不起 agent 的。AutoX 是独立开源项目，APK 原样附带，许可证与源码见 `NOTICE.md`。
+
 ### 2. 放入脚本
 
 把 `autox/` 下的文件放到手机：
@@ -457,6 +477,7 @@ python scripts\fetch_gallery.py
 ## 已知限制
 
 - 测试于 AutoX.js 6.6.8；其他版本 API 可能不同
+- **AutoX.js 6.6.8 是独立 APK，不在 Chat/Boot APK 内**；1.1 Release 附件已提供 `AutoX.js-6.6.8.apk` 和 `bundle.zip`
 - MIUI/HyperOS 的自启动、后台限制会直接影响稳定性
 - 锁屏 PIN/指纹不处理；有 PIN 时她只能亮屏，不能进桌面
 - 公共 ntfy 有限流；App 和 Agent 都做了退避，但仍可能延迟

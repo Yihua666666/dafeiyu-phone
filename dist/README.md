@@ -1,5 +1,11 @@
 # 安装包
 
+> AutoX.js 6.6.8 是独立运行时，不在 Chat/Boot APK 内。  
+> Release 附件提供 `AutoX.js-6.6.8.apk` 和 `dafeiyu-phone-1.1.0-bundle.zip`：  
+> <https://github.com/Yihua666666/dafeiyu-phone/releases/tag/v1.1.0>
+
+安装顺序：**AutoX.js 6.6.8 → DafeiyuChat → DafeiyuBoot**
+
 ## DafeiyuChat-1.1.0.apk
 
 - 包名：`com.deepseek.dafeiyu.chat`

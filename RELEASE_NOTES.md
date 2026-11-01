@@ -167,6 +167,24 @@ QQ 会收集：
 6. B站可选：远程发 `B站登录` 扫码
 7. 记忆文件兼容，不需要迁移；旧的重复 facts 会在启动时自动归档
 
+## 安装包
+
+AutoX.js 6.6.8 是独立运行时，**不在 Chat/Boot APK 内**。1.1.0 Release 额外附：
+
+```text
+AutoX.js-6.6.8.apk
+dafeiyu-phone-1.1.0-bundle.zip   # AutoX + Chat + Boot + 安装顺序
+```
+
+安装顺序：
+
+```text
+AutoX.js 6.6.8 → DafeiyuChat → DafeiyuBoot
+```
+
+AutoX 为原样附带的第三方 APK，MPL 2.0 + 非商业限制，源码：
+<https://github.com/aiselp/AutoX>
+
 ## 包校验
 
 ```text
@@ -177,6 +195,14 @@ sha256: EF84CF03C08B86FA49B4EFA83D4AA107915FC9562B2082690DCD70162D9B781B
 DafeiyuBoot-1.0.0.apk
 size:   2524020
 sha256: a27abc87d8665e823ddfde2bec2917f4600f6f34bd2a4fef278edecef5819fc4
+
+AutoX.js-6.6.8.apk
+size:   76544027
+sha256: DEC81B4A8739F173C084626676C862E008F9D840EAC61346AC0CC3F3DCB8096E
+
+dafeiyu-phone-1.1.0-bundle.zip
+size:   102667410
+sha256: AB9192963119BC23CD35FBE3FF6E8489464EB0456708141CC6F801E6ABDE9BB2
 ```
 
 ## 已知限制

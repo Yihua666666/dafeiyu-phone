@@ -14,6 +14,22 @@
 
 ## 1. 安装 AutoX.js
 
+AutoX.js 是独立运行时，**不在 `DafeiyuChat` / `DafeiyuBoot` APK 内**。  
+从 1.1.0 起，Release 附件提供：
+
+```text
+AutoX.js-6.6.8.apk
+dafeiyu-phone-1.1.0-bundle.zip
+```
+
+<https://github.com/Yihua666666/dafeiyu-phone/releases/tag/v1.1.0>
+
+安装顺序：
+
+```text
+AutoX.js 6.6.8 → DafeiyuChat → DafeiyuBoot
+```
+
 安装 AutoX.js 6.6.8 后，逐项打开：
 
 1. AutoX 首页左上角菜单 → **无障碍服务**

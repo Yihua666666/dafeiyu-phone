@@ -40,7 +40,14 @@ redistribute the APK, keep the attribution in the app gallery and in this file.
 
 The phone automation runtime is AutoX.js:
 
-- https://github.com/aiselp/AutoX
+- Source: https://github.com/aiselp/AutoX
+- License: MPL 2.0 plus a non-commercial restriction (see
+  `LICENSE.md` and `LICENSE-GPL-V2.md` in that repository)
 
-AutoX.js is distributed under its own license. This repository does not bundle
-the AutoX.js APK.
+The `AutoX.js-6.6.8.apk` attached to the GitHub Releases is an **unmodified
+copy of the AutoX.js 6.6.8 APK** provided for installation convenience. It is
+not covered by this repository's MIT license; it remains under AutoX.js's own
+license, without warranty. The AutoX source is available at the link above.
+
+This repository's source tree does not commit the AutoX APK; only the GitHub
+Release assets and the optional install bundle include it.
