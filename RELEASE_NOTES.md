@@ -1,4 +1,79 @@
-# dafeiyu-phone 1.1.0
+# dafeiyu-phone 2.0.0
+
+> 相对 1.1.0：从“会聊天、会刷手机”，升级到“能看、能听、能说”，并把摄像头/麦克风的边界收紧到前台手动触发。
+
+发布日期：2026-11-05
+
+## 一句话
+
+2.0 的大肥鱼有了自己的眼睛、耳朵和嘴，但只有在 DafeiyuEye 前台、你亲手点按钮时，才允许使用摄像头和麦克风。
+
+## 新增
+
+### 1. DafeiyuEye：眼睛
+
+- 独立 Android App：`app/DafeiyuEye`
+- Camera2 + TextureView 实时取景
+- 64×36 HSV 网格变化检测：切点 / 积分 / 静默兜底 / 去重
+- 只写 `/sdcard/DeepSeekGirl/vision/observations.jsonl`，不写 `memory/`
+- 观察由 agent 精炼、去重后写入 `memory/vision.md` 和 `memory/chat`
+- APK 内置中文离线 ASR 模型，首次启动复制到 App 私有目录
+
+### 2. 耳朵：sherpa-onnx 离线中文 ASR
+
+- 内置 `sherpa-onnx` + Paraformer int8 中文模型
+- 不依赖 `SpeechRecognizer`、不依赖小米/Google ASR
+- 16kHz 录音 + 静音检测，一次说一句
+- 结果直接进 `ChatClient`，和视觉观察一起作为上下文
+
+### 3. 嘴：不抢话的 TTS
+
+- `QUEUE_FLUSH` → `QUEUE_ADD`
+- 上一句说完才接下一句
+- 单句最多 50 字，视觉描述 20 字、语音回复 15–30 字
+- 系统 TTS（小米/Google 均可）
+
+### 4. 隐私：前台手动触发
+
+- 打开 DafeiyuEye 不会自动开摄像头
+- 必须点“带她看看”才启动 EyeService
+- 必须点“听我说”才启动录音
+- 退到桌面/锁屏/切到别的 App：`onStop` 立即停服务、停录音、断相机
+- 自主/好奇任务禁止启动 DafeiyuEye 的摄像头或麦克风
+- AutoX 本身 CAMERA / RECORD_AUDIO 均为 denied
+
+### 5. 任务模型
+
+- Ticket / 队列 / 单 Executor / Report
+- `/sdcard/PhoneAgent/tickets.json` 持久化，重启恢复
+- 卡死自动复位 + 30 秒重试门限
+- 自主、远程、面板任务统一排队
+
+### 6. QQ / ntfy 记忆
+
+- QQ 特别关心强制按私聊处理，不再误判成群聊
+- QQ 上下文最近 6 小时、最多 12 条
+- QQ 和 ntfy 的用户消息、助手回复都写入 `memory/chat/YYYY-MM-DD.jsonl`
+- QQ 主界面未读轮询、滚动到底部、读最新一条
+
+## 已知限制
+
+- ASR 模型约 82MB，APK 约 94MB；首次使用需复制模型
+- sherpa-onnx 依赖只保留 arm64-v8a
+- 视觉记忆每 30 秒最多处理 12 条，历史积压需要几轮消化
+- TTS 队列暂无限长，观察特别密集时可能积压
+
+## 验证
+
+- `adb install` 94MB APK 成功
+- 打开 App 不点按钮：EyeService = 0
+- 点“带她看看”：EyeService 启动
+- 按 Home：EyeService = 0，相机 DISCONNECT
+- ASR：`DafeiyuEye: ASR model loaded`
+- TTS：`onSynthesizeText Start/End`
+- 视觉记忆：`视觉记忆 +12 条`
+
+﻿# dafeiyu-phone 1.1.0
 
 > 相对 1.0.0：从“能自己生活、能远程聊天”，升级到“能接住上下文、能刷 B站、能收梗、能熄屏做事、能自己调面板”。
 
@@ -233,3 +308,4 @@ sha256: AB9192963119BC23CD35FBE3FF6E8489464EB0456708141CC6F801E6ABDE9BB2
 - 安全边界与任务 watchdog
 
 1.0.0 的 tag 和 release 仍然保留，可回退。
+

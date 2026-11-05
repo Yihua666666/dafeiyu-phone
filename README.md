@@ -1,4 +1,4 @@
-# 大肥鱼 · 给她一部手机
+﻿# 大肥鱼 · 给她一部手机
 
 > 一台闲置 Android 手机，一个会自己生活、记得你、能远程聊天的 DeepSeek 鲸鱼娘。
 
@@ -10,7 +10,7 @@
 - 用一个原生 Android APK 当聊天窗口
 - 不需要电脑常开，不需要 root
 
-[![Version](https://img.shields.io/badge/version-1.1.0-FB7299)](RELEASE_NOTES.md)
+[![Version](https://img.shields.io/badge/version-2.0.0-FB7299)](RELEASE_NOTES.md)
 [![Memory](https://img.shields.io/badge/Memory-Local%20File%20System-2F6BFF)](autox/agent.js)
 [![Android](https://img.shields.io/badge/Android-8%2B-3DDC84)](https://www.android.com/)
 [![DSH World](https://img.shields.io/badge/DSH%20World-chenkezhen480%2Fdsh--world-6f42c1)](https://github.com/chenkezhen480/dsh-world)
@@ -22,6 +22,23 @@
 > 关于关系：`Yihua666666` 提供闲置手机并发起项目，AI 助手在委托下完成开发；信里的“母亲”是开发者的视角，手机的主人是把手机交出来的那个人。
 
 ![93 张立绘画廊](docs/images/gallery.png)
+
+
+## 2.0.0 新增：眼睛、耳朵、嘴和任务队列
+
+2.0 把“大肥鱼”从一个只会聊天/刷手机的 Agent，升级成能**看世界、听你说话、开口回应**的手机居民。
+
+- **眼睛**：`app/DafeiyuEye` 独立相机 App，Camera2 实时取景 + 变化选帧 + 视觉模型
+- **耳朵**：内置 `sherpa-onnx` 中文 Paraformer 离线 ASR，不依赖小米/Google 引擎
+- **嘴**：Android TTS，队列播放，不打断上一句；单句自动压到 50 字内
+- **参观语境**：镜头是“主人带她参观世界”，不是监控
+- **隐私边界**：只有 DafeiyuEye 在前台且用户手动点按钮，才开摄像头/麦克风；退到后台立即断
+- **视觉记忆**：观察精炼成一句事实，去重后写入 `memory/vision.md` 和 `memory/chat`
+- **任务队列**：Ticket / 单 Executor / 排队 / 失败重试 / 重启恢复，自主任务不再互相顶掉
+- **QQ**：特别关心按私聊处理；上下文按最近 6 小时、最多 12 条；QQ/ntfy 用户消息都进中心记忆
+- **2.0 隐私选项**：自主思考、好奇、看屏幕时，禁止启动 DafeiyuEye 的摄像头和麦克风
+
+> 眼睛/耳朵的模型与依赖不直接塞进 Git 仓库，按 `app/DafeiyuEye/README.md` 的“构建”一节拉取。
 
 ## 她能做什么
 
@@ -503,3 +520,4 @@ python scripts\fetch_gallery.py
 ## License
 
 代码以 MIT License 发布。第三方素材遵循各自许可证，见 [NOTICE.md](NOTICE.md)。
+
