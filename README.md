@@ -40,6 +40,16 @@
 
 > 眼睛/耳朵的模型与依赖不直接塞进 Git 仓库，按 `app/DafeiyuEye/README.md` 的“构建”一节拉取。
 
+
+## 致谢与参考
+
+视觉部分的变化选帧算法参考了：
+
+- [SAOS-3624/dsh-see-now](https://github.com/SAOS-3624/dsh-see-now) — Apache License 2.0
+- 感谢原作者 SAOS-3624 的开源工作
+
+DafeiyuEye 用 Android Camera2 原生重写了取帧、HSV 评分和选帧逻辑，不包含 dsh-see-now 的 Node.js / ffmpeg 源文件。若后续直接复用其代码，会同时保留上游 LICENSE 与 NOTICE。
+
 ## 她能做什么
 
 - **自己生活**：每 10–20 分钟自己想想做什么，写日记、翻笔记、看天气、刷视频、看番

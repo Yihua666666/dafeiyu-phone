@@ -63,6 +63,10 @@
 - 视觉记忆每 30 秒最多处理 12 条，历史积压需要几轮消化
 - TTS 队列暂无限长，观察特别密集时可能积压
 
+## 致谢
+
+视觉变化选帧参考 [SAOS-3624/dsh-see-now](https://github.com/SAOS-3624/dsh-see-now)（Apache-2.0）。DafeiyuEye 为 Android Camera2 原生重写。
+
 ## 验证
 
 - `adb install` 94MB APK 成功
