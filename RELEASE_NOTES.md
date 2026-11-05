@@ -65,7 +65,7 @@
 
 ## 致谢
 
-视觉变化选帧参考 [SAOS-3624/dsh-see-now](https://github.com/SAOS-3624/dsh-see-now)（Apache-2.0）。DafeiyuEye 为 Android Camera2 原生重写。
+视觉变化选帧参考 [SAOS-3624/dsh-see-now](https://github.com/SAOS-3624/dsh-see-now)（Apache-2.0）。上游 LICENSE/NOTICE 原样保留在 `app/DafeiyuEye/third_party/dsh-see-now/`，并打进 APK。DafeiyuEye 为 Android Camera2 原生重写。
 
 ## 验证
 

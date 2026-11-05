@@ -48,7 +48,7 @@
 - [SAOS-3624/dsh-see-now](https://github.com/SAOS-3624/dsh-see-now) — Apache License 2.0
 - 感谢原作者 SAOS-3624 的开源工作
 
-DafeiyuEye 用 Android Camera2 原生重写了取帧、HSV 评分和选帧逻辑，不包含 dsh-see-now 的 Node.js / ffmpeg 源文件。若后续直接复用其代码，会同时保留上游 LICENSE 与 NOTICE。
+DafeiyuEye 用 Android Camera2 原生重写了取帧、HSV 评分和选帧逻辑，不包含 dsh-see-now 的 Node.js / ffmpeg 源文件。上游 `LICENSE` 和 `NOTICE` 已原样保留在 `app/DafeiyuEye/third_party/dsh-see-now/`，也打进 APK 的 `assets/licenses/dsh-see-now/`。若后续直接复用其代码，会继续保留这两份文件。
 
 ## 她能做什么
 
