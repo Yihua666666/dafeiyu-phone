@@ -10,7 +10,7 @@
 - 用一个原生 Android APK 当聊天窗口
 - 不需要电脑常开，不需要 root
 
-[![Version](https://img.shields.io/badge/version-2.1.0-FB7299)](RELEASE_NOTES.md)
+[![Version](https://img.shields.io/badge/version-2.0.0-FB7299)](RELEASE_NOTES.md)
 [![Memory](https://img.shields.io/badge/Memory-Local%20File%20System-2F6BFF)](autox/agent.js)
 [![Android](https://img.shields.io/badge/Android-8%2B-3DDC84)](https://www.android.com/)
 [![DSH World](https://img.shields.io/badge/DSH%20World-chenkezhen480%2Fdsh--world-6f42c1)](https://github.com/chenkezhen480/dsh-world)
