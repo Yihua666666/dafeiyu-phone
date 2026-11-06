@@ -66,6 +66,48 @@ powershell -File app/DafeiyuEye/build.ps1
 app/DafeiyuEye/dist/DafeiyuEye.apk
 ```
 
+
+## 第三方 TTS 接口
+
+系统 TTS 不是唯一选择。App 首页可以填：
+
+```text
+TTS 地址
+TTS API Key（可留空）
+TTS voice
+TTS style
+```
+
+地址留空 = 系统 TTS；填了就走通用 HTTP 适配器。
+
+协议：
+
+```http
+POST {地址}
+Authorization: Bearer {Key}
+Content-Type: application/json
+
+{"text":"你好呀","voice":"feiyu","style":"cute"}
+```
+
+返回音频字节，或 JSON：
+
+```json
+{"audio_url":"https://..."}
+```
+
+也支持 `url`、`audio_base64`、`audio.url`。
+
+想完全自定义，实现：
+
+```text
+src/com/deepseek/dafeiyu/eye/TtsProvider.java
+```
+
+接口只有 `speak / stop / shutdown`，由实现方负责排队，不打断上一句。
+
+完整说明见 [docs/TTS.md](../../docs/TTS.md)。
+
 ## 输出
 
 ```text

@@ -38,7 +38,7 @@ public class EyeService extends Service {
     private FrameAnalyzer analyzer;
     private Surface previewSurface;
     private OverlayChat overlay;
-    private Speaker speaker;
+    private TtsProvider tts;
     private EyeConfig config;
     private ChatClient chatClient;
     private final StringBuilder visionContext = new StringBuilder();
@@ -76,12 +76,12 @@ public class EyeService extends Service {
             startForeground(NID, n);
         }
         overlay = new OverlayChat(this);
-        speaker = new Speaker(this);
         config = EyeConfig.load(this);
+        tts = TtsFactory.create(this, config);
         chatClient = new ChatClient(config);
         analyzer = new FrameAnalyzer(config, desc -> {
             if (overlay != null) overlay.show(desc);
-            if (speaker != null) speaker.speak(desc);
+            if (tts != null) tts.speak(desc);
             synchronized (visionContext) {
                 visionContext.append(" · ").append(desc);
                 if (visionContext.length() > 700) {
@@ -188,6 +188,10 @@ public class EyeService extends Service {
         return START_STICKY;
     }
 
+    public void speakNow(String text) {
+        if (tts != null && text != null && !text.trim().isEmpty()) tts.speak(text);
+    }
+
     public void ask(String text) {
         if (text == null || text.trim().isEmpty() || chatClient == null || !config.hasVision()) return;
         final String heard = text.trim();
@@ -195,7 +199,7 @@ public class EyeService extends Service {
         synchronized (visionContext) { ctx = visionContext.toString(); }
         chatClient.reply(heard, ctx, reply -> {
             if (overlay != null) overlay.show(reply);
-            if (speaker != null) speaker.speak(reply);
+            if (tts != null) tts.speak(reply);
         });
     }
 
@@ -205,7 +209,7 @@ public class EyeService extends Service {
         try { if (camera != null) camera.close(); } catch (Throwable ignored) { }
         try { if (reader != null) reader.close(); } catch (Throwable ignored) { }
         if (overlay != null) overlay.destroy();
-        if (speaker != null) speaker.shutdown();
+        if (tts != null) tts.shutdown();
         if (thread != null) thread.quitSafely();
         super.onDestroy();
     }

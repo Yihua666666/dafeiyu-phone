@@ -1,3 +1,31 @@
+# dafeiyu-phone 2.1.0
+
+> 相对 2.0.0：把语音输出做成可插拔接口，下载的人可以自行接第三方 TTS，不把 App 锁死在系统 TTS。
+
+发布日期：2026-11-06
+
+## 新增
+
+- `TtsProvider` 接口：`speak / stop / shutdown`
+- `HttpTtsProvider`：通用 HTTP 适配器
+- App 首页新增“第三方 TTS（可选）”配置：地址、Key、voice、style
+- 地址留空自动回退系统 TTS
+- 支持响应：音频字节、`audio_url`、`url`、`audio_base64`、`audio.url`
+- 异步 job 型服务（如肥鱼声音服务）的接入说明与同步代理示例
+- 新增文档 `docs/TTS.md`
+
+## 注意
+
+- 第三方 TTS 会让文本离开手机；传感器隐私边界不覆盖网络 TTS
+- 肥鱼声库的素材授权与署名见上游 `COPYRIGHT.md` / `NOTICE.md`
+- 本项目不打包第三方模型或声音
+
+## 验证
+
+- 源码编译通过
+- 系统 TTS 回退逻辑保留
+- HTTP 适配器串行播放，不打断上一句
+
 # dafeiyu-phone 2.0.0
 
 > 相对 1.1.0：从“会聊天、会刷手机”，升级到“能看、能听、能说”，并把摄像头/麦克风的边界收紧到前台手动触发。

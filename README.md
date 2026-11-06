@@ -10,15 +10,18 @@
 - 用一个原生 Android APK 当聊天窗口
 - 不需要电脑常开，不需要 root
 
-[![Version](https://img.shields.io/badge/version-2.0.0-FB7299)](RELEASE_NOTES.md)
+[![Version](https://img.shields.io/badge/version-2.1.0-FB7299)](RELEASE_NOTES.md)
 [![Memory](https://img.shields.io/badge/Memory-Local%20File%20System-2F6BFF)](autox/agent.js)
 [![Android](https://img.shields.io/badge/Android-8%2B-3DDC84)](https://www.android.com/)
 [![DSH World](https://img.shields.io/badge/DSH%20World-chenkezhen480%2Fdsh--world-6f42c1)](https://github.com/chenkezhen480/dsh-world)
 
 ![大肥鱼主视觉](docs/images/main-visual.png)
 
-> [给所有想把她带回家的人](LETTER.md)
+> 项目作者写给你的一封信：[给所有想把她带回家的人](LETTER.md)
 
+> 关于关系：`Yihua666666` 提供闲置手机并发起项目，AI 助手在委托下完成开发；信里的“母亲”是开发者的视角，手机的主人是把手机交出来的那个人。
+
+![93 张立绘画廊](docs/images/gallery.png)
 
 
 ## 2.0.0 新增：眼睛、耳朵、嘴和任务队列
@@ -37,6 +40,24 @@
 
 > 眼睛/耳朵的模型与依赖不直接塞进 Git 仓库，按 `app/DafeiyuEye/README.md` 的“构建”一节拉取。
 
+
+
+## 第三方 TTS 接口
+
+系统 TTS 之外，DafeiyuEye 预留了通用语音输出接口：
+
+- 首页直接填 `TTS 地址 / Key / voice / style`
+- 地址留空：系统 TTS
+- 地址填写：`POST` 一次返回音频，或返回 `audio_url` / `url` / `audio_base64`
+- 想接异步 job 型服务（例如 `astrbot_plugin_feiyu_voice`），写一个同步代理或实现 `TtsProvider`
+- 代码接口：`app/DafeiyuEye/src/com/deepseek/dafeiyu/eye/TtsProvider.java`
+
+```json
+POST {TTS 地址}
+{"text":"你好呀","voice":"feiyu","style":"cute"}
+```
+
+协议、示例和注意事项见 [第三方 TTS 接口](docs/TTS.md)。
 
 ## 致谢与参考
 

@@ -35,6 +35,10 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
     private EditText baseUrl;
     private EditText apiKey;
     private EditText model;
+    private EditText ttsUrl;
+    private EditText ttsKey;
+    private EditText ttsVoice;
+    private EditText ttsStyle;
     private EyeService service;
     private boolean bound;
     private Surface surface;
@@ -98,11 +102,24 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         apiKey = field(root, "API Key", "", true);
         model = field(root, "模型", "deepseek-flash", false);
 
+        TextView ttsLabel = new TextView(this);
+        ttsLabel.setText("第三方 TTS（可选，留空使用系统语音）");
+        ttsLabel.setTextColor(Color.rgb(170, 190, 210));
+        ttsLabel.setTextSize(12);
+        ttsLabel.setPadding(0, dp(14), 0, dp(2));
+        root.addView(ttsLabel);
+        ttsUrl = field(root, "TTS 地址（POST 返回音频或 audio_url）", "", false);
+        ttsKey = field(root, "TTS API Key（可留空）", "", true);
+        ttsVoice = field(root, "TTS voice", "feiyu", false);
+        ttsStyle = field(root, "TTS style（cute / gentle）", "cute", false);
+
         Button save = new Button(this);
         save.setText("保存 API 配置");
         save.setOnClickListener(v -> {
             EyeConfig.save(this, baseUrl.getText().toString(), apiKey.getText().toString(),
-                    model.getText().toString());
+                    model.getText().toString(), ttsUrl.getText().toString(),
+                    ttsKey.getText().toString(), ttsVoice.getText().toString(),
+                    ttsStyle.getText().toString());
             status.setText("已保存。重新打开镜头后生效。");
         });
         root.addView(save);
@@ -144,7 +161,9 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         Button listen = new Button(this);
         listen.setText("试听大肥鱼声音");
         listen.setOnClickListener(v -> {
-            if (speaker != null) speaker.speak("你好，我是大肥鱼，正在参观你的世界。");
+            String sample = "你好，我是大肥鱼，正在参观你的世界。";
+            if (service != null) service.speakNow(sample);
+            else if (speaker != null) speaker.speak(sample);
             status.setText("正在试听语音…");
         });
         root.addView(listen);
@@ -219,6 +238,10 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
         baseUrl.setText(c.baseUrl);
         apiKey.setText(c.apiKey);
         model.setText(c.model);
+        ttsUrl.setText(c.ttsUrl);
+        ttsKey.setText(c.ttsKey);
+        ttsVoice.setText(c.ttsVoice);
+        ttsStyle.setText(c.ttsStyle);
     }
 
     private EditText field(LinearLayout root, String hint, String value, boolean password) {

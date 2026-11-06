@@ -7,7 +7,7 @@ import android.util.Log;
 import java.util.Locale;
 
 /** Android 本地 TTS：把大肥鱼的观察念出来。 */
-public class Speaker implements TextToSpeech.OnInitListener {
+public class Speaker implements TextToSpeech.OnInitListener, TtsProvider {
     private final Context ctx;
     private TextToSpeech tts;
     private boolean ready;
@@ -52,6 +52,7 @@ public class Speaker implements TextToSpeech.OnInitListener {
         }
     }
 
+    @Override
     public void speak(String text) {
         if (text == null || text.trim().isEmpty()) return;
         if (!ctx.getSharedPreferences("eye", Context.MODE_PRIVATE).getBoolean("tts", true)) return;
@@ -83,6 +84,12 @@ public class Speaker implements TextToSpeech.OnInitListener {
         return t.substring(0, cut) + "…";
     }
 
+    @Override
+    public void stop() {
+        try { if (tts != null) tts.stop(); } catch (Throwable ignored) { }
+    }
+
+    @Override
     public void shutdown() {
         try { if (tts != null) { tts.stop(); tts.shutdown(); } } catch (Throwable ignored) { }
         tts = null;
